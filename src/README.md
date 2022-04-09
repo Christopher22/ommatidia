@@ -1,0 +1,2 @@
+# Re-usable source code for different detectors
+This folder contains source code required by different detectors and is used to avoid duplicates. It is ordered according to the programming languages of the detectors.

@@ -1,0 +1,191 @@
+openapi: 3.0.0
+info:
+    version: 0.1.0
+    title: Ommatidia
+    description: Unified access to Pupil detectors
+paths:
+    /:
+        get:
+            description: Get the meta data of the detector
+            responses:
+                "200":
+                    description: "Meta data of the detector"
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/MetaData"
+
+    /detection/:
+        get:
+            description: Returns a list of running detections
+            responses:
+                "200":
+                    description: Successful response
+        post:
+            description: Initialize a new detection.
+            responses:
+                "200":
+                    description: Detection successfully created.
+
+    /detection/{detectionId}:
+        get:
+            summary: Get the detection by its ID
+            parameters:
+                - $ref: "#/components/parameters/DetectionId"
+            responses:
+                "200":
+                    description: TODO
+                "404":
+                    description: "The selected ID was not found"
+        delete:
+            summary: Delete the detection and remove all associated resources.
+            parameters:
+                - $ref: "#/components/parameters/DetectionId"
+            responses:
+                "200":
+                    description: The detection was successfully deleted.
+                "404":
+                    description: "The selected ID was not found"
+
+    /detection/{detectionId}/train/:
+        post:
+            summary: Add training data to the instance of the detector algorithm
+            parameters:
+                - $ref: "#/components/parameters/DetectionId"
+            requestBody:
+                $ref: "#/components/requestBodies/Sample"
+            responses:
+                "200":
+                    description: The image was added as training sample to the detector.
+                "409":
+                    description: The detector is already used for evaluation.
+                "501":
+                    description: Training the detector is not supported
+
+    /detection/{detectionId}/evaluate/:
+        post:
+            summary: Add data to be evaluated
+            requestBody:
+                $ref: "#/components/requestBodies/Sample"
+            parameters:
+                - $ref: "#/components/parameters/DetectionId"
+            responses:
+                "200":
+                    description: The data was added and could be queried.
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/SampleId"
+                "409":
+                    description: The detector does not support streaming and a first result was already queried.
+
+    /detection/{detectionId}/evaluate/{evaluationId}:
+        get:
+            summary: Get the estimated pupil within a sample
+            parameters:
+                - $ref: "#/components/parameters/DetectionId"
+                - in: path
+                  name: evaluationId
+                  schema:
+                      $ref: "#/components/schemas/SampleId"
+                  required: true
+                  description: Identifier of the detection
+            responses:
+                "200":
+                    description: The estimated pupil.
+                    content:
+                        application/json:
+                            schema:
+                                oneOf:
+                                    - $ref: "#/components/schemas/Point"
+                                    - $ref: "#/components/schemas/Ellipse"
+                "404":
+                    description: The sample or detection was not found
+components:
+    requestBodies:
+        Sample:
+            description: The sample stored as PNG file.
+            required: true
+            content:
+                image/png:
+                    schema:
+                        type: string
+                        format: binary
+    parameters:
+        DetectionId:
+            in: path
+            name: detectionId
+            schema:
+                type: string
+            required: true
+            description: Identifier of the detection
+    schemas:
+        Point:
+            type: object
+            properties:
+                x:
+                    type: number
+                    format: float
+                    minimum: 0.0
+                    maximum: 1.0
+                y:
+                    type: number
+                    format: float
+                    minimum: 0.0
+                    maximum: 1.0
+        Ellipse:
+            type: object
+            properties:
+                center:
+                    $ref: "#/components/schemas/Point"
+                major:
+                    type: number
+                    format: float
+                    minimum: 0.0
+                    maximum: 1.0
+                minor:
+                    type: number
+                    format: float
+                    minimum: 0.0
+                    maximum: 1.0
+                rotation:
+                    type: number
+                    format: float
+                    minimum: 0.0
+                    maximum: 360.0
+        MetaData:
+            type: object
+            properties:
+                name:
+                    type: string
+                    description: The name of the detector.
+                publication:
+                    type: string
+                    description: The DOI of the publication.
+                authors:
+                    type: array
+                    items:
+                        type: string
+                    description: The authors of the detector.
+                license:
+                    type: string
+                    description: The license of the detector.
+                output:
+                    type: string
+                    description: The output of the detector.
+                    enum:
+                        - Point
+                        - Ellipse
+                        - Mask
+                training:
+                    type: string
+                    description: Whether or not the detector requires or supports a training
+                    enum:
+                        - Unsupported
+                        - Optional
+                        - Required
+                supports_streaming:
+                    type: boolean
+                    description: Whether or not the detector requires all pupils to be available before yielding its values.
+        SampleId:
+            type: integer
