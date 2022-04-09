@@ -1,0 +1,2 @@
+# Ommatidia: C++ Glue
+An implementation of a reference server written in C++. Detectors utilizing this programming language may subclass "Detection" and "Server" to provide a interface accordingly to the OpenAPI definition.
