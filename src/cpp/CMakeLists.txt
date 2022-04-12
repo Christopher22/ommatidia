@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.15)
 project(Ommatidia
     VERSION 0.1
     DESCRIPTION "Core parts for running pupil detectors with REST"
