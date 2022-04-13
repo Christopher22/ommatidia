@@ -13,6 +13,11 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
   )
 endif()
 
+# Allow testing by supporting BUILD_TESTING
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    include(CTest)
+endif()
+
 # We use CPM to manage dependencies in CMAKE. Download it from GitHub and install it.
 set(CPM_DOWNLOAD_VERSION 0.34.0)
 
@@ -38,7 +43,7 @@ include(${CPM_DOWNLOAD_LOCATION})
 CPMAddPackage("gh:TheLartians/PackageProject.cmake@1.8.0")
 
 # Find the required dependencies
-find_package(Crow REQUIRED)
+CPMAddPackage("gh:CrowCpp/Crow@1.0+1")
 find_package(OpenCV REQUIRED COMPONENTS core)
 
 # Define the library
@@ -68,3 +73,15 @@ packageProject(
   COMPATIBILITY SameMajorVersion
   DEPENDENCIES "Crow;OpenCV"
 )
+
+# Support tests
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+#if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+  CPMAddPackage("gh:doctest/doctest@2.4.8")
+
+  file(GLOB_RECURSE test_codes CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp")
+  add_executable(OmmatidiaTest ${test_codes})
+  set_target_properties(OmmatidiaTest PROPERTIES CXX_STANDARD 17)
+  target_link_libraries(OmmatidiaTest PUBLIC doctest Ommatidia::Ommatidia)
+  add_test(NAME OmmatidiaTestCTest COMMAND OmmatidiaTest)
+endif()

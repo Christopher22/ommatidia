@@ -8,8 +8,6 @@ WORKDIR /ommatidia
 
 RUN apt-get update \
     && apt-get -y install --no-install-recommends cmake build-essential wget git ca-certificates libboost-all-dev libopencv-dev \
-    && wget https://github.com/CrowCpp/Crow/releases/download/v1.0%2B1/crow-v1.0+1.deb \
-    && apt install ./crow-v1.0+1.deb \
     && mkdir /ommatidia/library/build \
     && cd /ommatidia/library/build \
     && cmake .. \
