@@ -2,11 +2,9 @@
 
 #include <crow/json.h>
 
-namespace ommatidia {
-using JsonValue = crow::json::wvalue;
-using Position = unsigned int;
-using Confidence = float;
+#include "../types.hpp"
 
+namespace ommatidia {
 class Prediction {
  public:
   constexpr Prediction(Confidence confidence) noexcept : confidence_(confidence) {}

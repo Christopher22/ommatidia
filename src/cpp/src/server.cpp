@@ -7,7 +7,7 @@
 namespace ommatidia {
 using JsonValue = crow::json::wvalue;
 
-Server::Server(MetaData &&meta_data) noexcept
+Server::Server(MetaData&& meta_data) noexcept
     : detections_(), meta_data_(meta_data) {}
 
 void Server::run(uint16_t port) {
@@ -58,12 +58,7 @@ crow::response Server::GetDetections() {
 }
 
 crow::response Server::PostDetections(const crow::request& request) {
-  auto json_body = crow::json::load(request.body);
-  if (json_body.error()) {
-    return Error("Malformed JSON in body", crow::BAD_REQUEST);
-  }
-
-  auto params = DetectionParams::Parse(json_body);
+  auto params = DetectionParams::Parse(request.body);
   return Check(params, [this](DetectionParams& params) {
     auto detection_result = this->CreateDetection(params);
     if (Error* error = std::get_if<Error>(&detection_result)) {

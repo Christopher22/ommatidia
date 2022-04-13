@@ -2,6 +2,14 @@
 
 namespace ommatidia {
 
+Result<DetectionParams> DetectionParams::Parse(std::string_view request) {
+  auto json_body = crow::json::load(request.data(), request.size());
+  if (json_body.error()) {
+    return Error("Malformed JSON in body", crow::BAD_REQUEST);
+  }
+  return Parse(json_body);
+}
+
 Result<DetectionParams> DetectionParams::Parse(
     const crow::json::rvalue& request) {
   static const char* WIDTH = "width";

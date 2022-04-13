@@ -25,6 +25,9 @@ class Detection {
   /// Get the prediction at a specific sample.
   virtual std::optional<JsonValue> GetPrediction(
       std::size_t index) const noexcept = 0;
+
+ protected:
+  constexpr Detection() noexcept {}
 };
 
 }  // namespace ommatidia
