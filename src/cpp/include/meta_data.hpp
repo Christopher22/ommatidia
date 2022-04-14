@@ -45,15 +45,15 @@ class MetaData : public crow::returnable {
   MetaData &operator=(MetaData const &) = delete;
 
   std::string dump() const override;
-  constexpr std::string_view Name() const noexcept { return name_; }
+  inline std::string_view Name() const noexcept { return name_; }
   std::vector<std::string_view> Authors() const;
-  constexpr std::string_view AdditionalInformation() const noexcept {
+  inline std::string_view AdditionalInformation() const noexcept {
     return additional_information_;
   }
-  constexpr License LicenseInformation() const noexcept { return license_; }
-  constexpr TrainingType TrainingSupport() const noexcept { return training_; }
-  constexpr PredictionType PredictionOutput() const noexcept { return output_; }
-  constexpr SupportStreaming StreamingSupport() const noexcept {
+  inline License LicenseInformation() const noexcept { return license_; }
+  inline TrainingType TrainingSupport() const noexcept { return training_; }
+  inline PredictionType PredictionOutput() const noexcept { return output_; }
+  inline SupportStreaming StreamingSupport() const noexcept {
     return supports_streaming_;
   }
 
@@ -72,7 +72,7 @@ class MetaData : public crow::returnable {
         return "Point";
       case PredictionType::Ellipse:
         return "Ellipse";
-      case PredictionType::Mask:
+      default:
         return "Mask";
     }
   }
@@ -83,7 +83,7 @@ class MetaData : public crow::returnable {
         return "Unsupported";
       case TrainingType::Optional:
         return "Optional";
-      case TrainingType::Required:
+      default:
         return "Required";
     }
   }
@@ -100,7 +100,7 @@ class MetaData : public crow::returnable {
         return "GPL";
       case License::AGPL:
         return "AGPL";
-      case License::Custom:
+      default:
         return "Custom";
     }
   }
