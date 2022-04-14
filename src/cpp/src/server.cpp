@@ -8,7 +8,7 @@ namespace ommatidia {
 using JsonValue = crow::json::wvalue;
 
 Server::Server(MetaData&& meta_data) noexcept
-    : detections_(), meta_data_(meta_data) {}
+    : detections_(), meta_data_(std::move(meta_data)) {}
 
 void Server::run(uint16_t port) {
   crow::SimpleApp app;
