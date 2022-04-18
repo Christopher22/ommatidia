@@ -8,42 +8,44 @@ namespace ommatidia {
 using JsonValue = crow::json::wvalue;
 
 Server::Server(MetaData&& meta_data) noexcept
-    : detections_(), meta_data_(std::move(meta_data)) {}
-
-void Server::run(uint16_t port) {
-  crow::SimpleApp app;
-
-  CROW_ROUTE(app, "/")
+    : server_(), detections_(), meta_data_(std::move(meta_data)) {
+  CROW_ROUTE(server_, "/")
   ([this]() { return this->GetRoot(); });
 
-  CROW_ROUTE(app, "/detections/")
+  CROW_ROUTE(server_, "/detections/")
   ([this]() { return this->GetDetections(); });
 
-  CROW_ROUTE(app, "/detections/")
+  CROW_ROUTE(server_, "/detections/")
       .methods(crow::HTTPMethod::POST)([this](const crow::request& request) {
         return this->PostDetections(request);
       });
 
-  CROW_ROUTE(app, "/detections/<int>/")
+  CROW_ROUTE(server_, "/detections/<int>/")
       .methods(crow::HTTPMethod::GET)(
           [this](int detection) { return this->GetDetection(detection); });
 
-  CROW_ROUTE(app, "/detections/<int>/")
+  CROW_ROUTE(server_, "/detections/<int>/")
       .methods(crow::HTTPMethod::DELETE)(
           [this](int detection) { return this->DeleteDetection(detection); });
 
-  CROW_ROUTE(app, "/detections/<int>/evaluate/")
+  CROW_ROUTE(server_, "/detections/<int>/evaluate/")
       .methods(crow::HTTPMethod::Post)(
           [this](const crow::request& request, int detection) {
             return this->PostEvaluation(detection, request);
           });
 
-  CROW_ROUTE(app, "/detections/<int>/evaluate/<int>")
+  CROW_ROUTE(server_, "/detections/<int>/evaluate/<int>")
   ([this](int detection, int sample_index) {
     return this->GetEvaluation(detection, sample_index);
   });
+}
 
-  app.port(port).multithreaded().run();
+void Server::run(uint16_t port) { server_.port(port).multithreaded().run(); }
+
+crow::response Server::run(crow::request request) {
+  crow::response response;
+  server_.handle(request, response);
+  return response;
 }
 
 crow::response Server::GetRoot() { return crow::response(this->meta_data_); }

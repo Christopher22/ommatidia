@@ -20,6 +20,7 @@ class Server {
   Server &operator=(Server const &) = delete;
 
   void run(uint16_t port);
+  crow::response run(crow::request request);
 
  protected:
   Server(MetaData &&meta_data) noexcept;
@@ -27,6 +28,7 @@ class Server {
       DetectionParams parameters) noexcept = 0;
 
  private:
+  crow::SimpleApp server_;
   MetaData meta_data_;
   std::unordered_map<int, std::unique_ptr<Detection>> detections_;
 
