@@ -4,6 +4,17 @@
 
 #include <detection_params.hpp>
 #include <meta_data.hpp>
+#include <external/server.hpp>
+
+#include "external/example_detection.hpp"
+
+static ommatidia::MetaData GenerateExampleData() {
+  return ommatidia::MetaData(
+      "ExampleDetector", {"Jane Doe", "Max Mustermann"},
+      "https://more-information.tld", ommatidia::License::GPL,
+      ommatidia::PredictionType::Ellipse, ommatidia::TrainingType::Unsupported,
+      ommatidia::SupportStreaming::Yes);
+}
 
 TEST_SUITE("DetectionParams") {
   TEST_CASE("Creation") {
@@ -28,12 +39,7 @@ TEST_SUITE("DetectionParams") {
 
 TEST_SUITE("MetaData") {
   TEST_CASE("Creation") {
-    ommatidia::MetaData meta(
-        "ExampleDetector", {"Jane Doe", "Max Mustermann"},
-        "https://more-information.tld", ommatidia::License::GPL,
-        ommatidia::PredictionType::Ellipse,
-        ommatidia::TrainingType::Unsupported, ommatidia::SupportStreaming::Yes);
-
+    auto meta = GenerateExampleData();
     CHECK(meta.Name() == "ExampleDetector");
     CHECK(meta.AdditionalInformation() == "https://more-information.tld");
     CHECK(meta.LicenseInformation() == ommatidia::License::GPL);
@@ -47,11 +53,7 @@ TEST_SUITE("MetaData") {
   }
 
   TEST_CASE("Clone") {
-    ommatidia::MetaData meta_original(
-        "ExampleDetector", {"Jane Doe", "Max Mustermann"},
-        "https://more-information.tld", ommatidia::License::GPL,
-        ommatidia::PredictionType::Ellipse,
-        ommatidia::TrainingType::Unsupported, ommatidia::SupportStreaming::Yes);
+    ommatidia::MetaData meta_original = GenerateExampleData();
     ommatidia::MetaData meta(meta_original);
 
     CHECK(meta.Name() == "ExampleDetector");
@@ -67,11 +69,7 @@ TEST_SUITE("MetaData") {
   }
 
   TEST_CASE("Move") {
-    ommatidia::MetaData meta_original(
-        "ExampleDetector", {"Jane Doe", "Max Mustermann"},
-        "https://more-information.tld", ommatidia::License::GPL,
-        ommatidia::PredictionType::Ellipse,
-        ommatidia::TrainingType::Unsupported, ommatidia::SupportStreaming::Yes);
+    ommatidia::MetaData meta_original = GenerateExampleData();
     ommatidia::MetaData meta(std::move(meta_original));
 
     CHECK(meta.Name() == "ExampleDetector");
@@ -87,11 +85,7 @@ TEST_SUITE("MetaData") {
   }
 
   TEST_CASE("JSON") {
-    ommatidia::MetaData meta(
-        "ExampleDetector", {"Jane Doe", "Max Mustermann"},
-        "https://more-information.tld", ommatidia::License::GPL,
-        ommatidia::PredictionType::Ellipse,
-        ommatidia::TrainingType::Unsupported, ommatidia::SupportStreaming::Yes);
+    ommatidia::MetaData meta = GenerateExampleData();
 
     auto json_body = crow::json::load(meta.dump());
     CHECK(json_body["name"] == "ExampleDetector");

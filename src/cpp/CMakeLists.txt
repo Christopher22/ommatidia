@@ -54,7 +54,7 @@ add_library(${PROJECT_NAME} STATIC ${headers} ${sources})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
 set_target_properties(${PROJECT_NAME} PROPERTIES DEBUG_POSTFIX "d")
 target_compile_options(${PROJECT_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/permissive->")
-target_link_libraries(${PROJECT_NAME} PUBLIC Crow::Crow opencv_core)
+target_link_libraries(${PROJECT_NAME} PUBLIC Crow::Crow opencv_core opencv_imgproc opencv_imgcodecs)
 target_include_directories(
   ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
                          $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
@@ -79,8 +79,9 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 #if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
   CPMAddPackage("gh:doctest/doctest@2.4.8")
 
-  file(GLOB_RECURSE test_codes CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp")
-  add_executable(OmmatidiaTest ${test_codes})
+  file(GLOB_RECURSE test_cpp CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp")
+  file(GLOB_RECURSE test_hpp CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.hpp")
+  add_executable(OmmatidiaTest ${test_cpp} ${test_hpp})
   set_target_properties(OmmatidiaTest PROPERTIES CXX_STANDARD 17)
   target_link_libraries(OmmatidiaTest PUBLIC doctest Ommatidia::Ommatidia)
   add_test(NAME OmmatidiaTestCTest COMMAND OmmatidiaTest)
