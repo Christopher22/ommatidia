@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <string>
 #include <memory>
+#include <functional>
 
 #include <crow/app.h>
 
@@ -21,6 +22,7 @@ class Server {
 
   void run(uint16_t port);
   crow::response run(crow::request request);
+  crow::response run(std::function<void(crow::request&)> callback);
 
  protected:
   Server(MetaData &&meta_data) noexcept;

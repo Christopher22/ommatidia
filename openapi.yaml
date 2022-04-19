@@ -15,7 +15,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/MetaData"
 
-    /detection/:
+    /detections/:
         get:
             description: Returns a list of running detections
             responses:
@@ -27,7 +27,7 @@ paths:
                 "200":
                     description: Detection successfully created.
 
-    /detection/{detectionId}:
+    /detections/{detectionId}:
         get:
             summary: Get the detection by its ID
             parameters:

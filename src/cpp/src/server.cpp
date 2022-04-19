@@ -38,6 +38,8 @@ Server::Server(MetaData&& meta_data) noexcept
   ([this](int detection, int sample_index) {
     return this->GetEvaluation(detection, sample_index);
   });
+
+  server_.validate();
 }
 
 void Server::run(uint16_t port) { server_.port(port).multithreaded().run(); }
@@ -48,7 +50,15 @@ crow::response Server::run(crow::request request) {
   return response;
 }
 
-crow::response Server::GetRoot() { return crow::response(this->meta_data_); }
+crow::response Server::run(std::function<void(crow::request&)> callback) {
+  crow::request request;
+  callback(request);
+  return this->run(request);
+}
+
+crow::response Server::GetRoot() {
+  return crow::response(200, this->meta_data_);
+}
 
 crow::response Server::GetDetections() {
   std::vector<JsonValue> detections;
@@ -56,7 +66,7 @@ crow::response Server::GetDetections() {
   for (const auto& detection : this->detections_) {
     detections.push_back(JsonValue(detection.first));
   }
-  return crow::response(JsonValue(detections));
+  return crow::response(200, JsonValue(detections).dump());
 }
 
 crow::response Server::PostDetections(const crow::request& request) {
@@ -70,7 +80,7 @@ crow::response Server::PostDetections(const crow::request& request) {
           std::get<std::unique_ptr<Detection>>(std::move(detection_result));
       auto index = this->detections_.size();
       this->detections_.insert({index, std::move(detection)});
-      return crow::response(JsonValue(index));
+      return crow::response(200, JsonValue(index).dump());
     }
   });
 }
@@ -125,7 +135,7 @@ crow::response Server::GetEvaluation(int detection_index, int sample_index) {
 
   auto sample = detection->second->GetPrediction(sample_index);
   if (sample.has_value()) {
-    return crow::response(*sample);
+    return crow::response(200, *sample);
   } else {
     return Error("The given sample is unknown", crow::NOT_FOUND);
   }
