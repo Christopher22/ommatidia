@@ -3,15 +3,15 @@
 #include <opencv2/core/types.hpp>
 
 #include "prediction.hpp"
+#include "radian.hpp"
 
 namespace ommatidia {
 using Size = float;
-using Angle = float;
 
 class Ellipse : public Prediction {
  public:
   Ellipse(Position x, Position y, Size first_size, Size second_size,
-          Angle angle, Confidence confidence);
+          Radian rotation, Confidence confidence);
   Ellipse(cv::RotatedRect &rotated_rect, Confidence confidence);
   constexpr Ellipse(Ellipse &&ellipse) noexcept
       : Prediction(ellipse.confidence_),
@@ -26,14 +26,7 @@ class Ellipse : public Prediction {
  protected:
   Position x_, y_;
   Size major_, minor_;
-  Angle angle_;
-
- private:
-  static constexpr Angle PI = 3.1415927f;
-
-  constexpr Angle DegreesToRadians(Angle degrees) noexcept {
-    return degrees * (Ellipse::PI / 180.0f);
-  }
+  Radian angle_;
 };
 
 }  // namespace ommatidia
