@@ -7,6 +7,7 @@
 
 #include <detection_params.hpp>
 #include <meta_data.hpp>
+#include <predictions/ellipse.hpp>
 #include <external/server.hpp>
 
 #include "external/example_detection.hpp"
@@ -17,6 +18,51 @@ static ommatidia::MetaData GenerateExampleData() {
       "https://more-information.tld", ommatidia::License::GPL,
       ommatidia::PredictionType::Ellipse, ommatidia::TrainingType::Unsupported,
       ommatidia::SupportStreaming::Yes);
+}
+
+TEST_SUITE("Prediction Output") {
+  TEST_CASE("Ellipse: From constructor") {
+    ommatidia::Size value1, value2;
+    SUBCASE("Min-Max order") {
+      value1 = 20.0;
+      value2 = 21.0;
+    }
+    SUBCASE("Max-Min order") {
+      value1 = 21.0;
+      value2 = 20.0;
+    }
+
+    ommatidia::Ellipse ellipse(4, 5, value1, value2,
+                               ommatidia::Radian::FromDegree(90.0), 0.7);
+    const auto serialized_ellipse = ellipse.Serialize().dump();
+
+    auto json = crow::json::load(serialized_ellipse);
+    CHECK(json["x"] == 4);
+    CHECK(json["y"] == 5);
+    CHECK(json["major"] == 21.0);
+    CHECK(json["minor"] == 20.0);
+    CHECK(static_cast<float>(json["angle"].d()) ==
+          doctest::Approx(ommatidia::Radian::PI / 2.0f).epsilon(0.01));
+    CHECK(json["confidence"] == 0.7);
+  }
+
+  TEST_CASE("Ellipse: From Pupil") {
+    const Pupil pupil(
+        cv::RotatedRect(cv::Point2f(5.0, 4.0), cv::Point2f(6.0, 7.0), 42.0),
+        0.22);
+
+    ommatidia::Ellipse ellipse(pupil, pupil.confidence);
+    const auto serialized_ellipse = ellipse.Serialize().dump();
+
+    auto json = crow::json::load(serialized_ellipse);
+    CHECK(json["x"] == 5);
+    CHECK(json["y"] == 4);
+    CHECK(json["major"] == 7.0);
+    CHECK(json["minor"] == 6.0);
+    CHECK(static_cast<float>(json["angle"].d()) ==
+          doctest::Approx(0.733f).epsilon(0.01));
+    CHECK(json["confidence"] == 0.22);
+  }
 }
 
 TEST_SUITE("DetectionParams") {

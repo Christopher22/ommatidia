@@ -13,10 +13,9 @@ Ellipse::Ellipse(Position x, Position y, Size first_size, Size second_size,
       minor_(std::min(first_size, second_size)),
       angle_(radian) {}
 
-Ellipse::Ellipse(cv::RotatedRect &rotated_rect, Confidence confidence)
+Ellipse::Ellipse(const cv::RotatedRect &rotated_rect, Confidence confidence)
     : Ellipse(rotated_rect.center.x, rotated_rect.center.y,
-              rotated_rect.boundingRect().width,
-              rotated_rect.boundingRect().height,
+              rotated_rect.size.width, rotated_rect.size.height,
               Radian::FromDegree(rotated_rect.angle), confidence) {}
 
 JsonValue Ellipse::Serialize() const noexcept {

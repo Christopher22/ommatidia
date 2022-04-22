@@ -12,7 +12,7 @@ class Ellipse : public Prediction {
  public:
   Ellipse(Position x, Position y, Size first_size, Size second_size,
           Radian rotation, Confidence confidence);
-  Ellipse(cv::RotatedRect &rotated_rect, Confidence confidence);
+  Ellipse(const cv::RotatedRect &rotated_rect, Confidence confidence);
   constexpr Ellipse(Ellipse &&ellipse) noexcept
       : Prediction(ellipse.confidence_),
         x_(ellipse.x_),
