@@ -4,6 +4,7 @@
 
 #include <doctest/doctest.h>
 #include <crow/json.h>
+#include <opencv2/imgcodecs.hpp>
 
 #include <detection_params.hpp>
 #include <meta_data.hpp>
@@ -265,6 +266,111 @@ TEST_SUITE("Server") {
         auto json_body = crow::json::load(response.body);
         CHECK(json_body.t() == crow::json::type::List);
         CHECK(json_body.size() == 0);
+      }
+    }
+
+    TEST_CASE("Delete non-existing") {
+      ommatidia::external::Server<ExampleDetection> server(
+          std::move(GenerateExampleData()));
+
+      auto response = server.run([](crow::request& request) {
+        request.method = crow::HTTPMethod::DELETE;
+        request.url = "/detections/0/";
+      });
+      REQUIRE(response.code == 404);
+    }
+  }
+
+  TEST_SUITE("Evaluation") {
+    TEST_CASE("Add image for evaluation") {
+      ommatidia::external::Server<ExampleDetection> server(
+          std::move(GenerateExampleData()));
+
+      // Create detection
+      {
+        auto response = server.run([](crow::request& request) {
+          request.method = crow::HTTPMethod::POST;
+          request.url = "/detections/";
+          request.body = crow::json::wvalue({std::make_pair("width", 4),
+                                             std::make_pair("height", 5)})
+                             .dump();
+        });
+        REQUIRE(response.code == 200);
+      }
+
+      // Send the image to the server
+      {
+        crow::request request;
+        request.method = crow::HTTPMethod::POST;
+        request.url = "/detections/0/evaluate/";
+
+        {
+          cv::Mat image = cv::Mat::zeros(5, 4, CV_8UC1);
+          std::vector<unsigned char> buffer;
+          SUBCASE("PNG") { cv::imencode(".png", image, buffer); }
+          SUBCASE("JPG") { cv::imencode(".jpg", image, buffer); }
+          SUBCASE("BMP") { cv::imencode(".bmp", image, buffer); }
+          request.body.assign(reinterpret_cast<char*>(buffer.data()),
+                              buffer.size());
+        }
+
+        auto response = server.run(request);
+        REQUIRE(response.code == 200);
+
+        auto json_body = crow::json::load(response.body);
+        CHECK(json_body.t() == crow::json::type::Number);
+        CHECK(json_body.i() == 0);
+      }
+    }
+
+    TEST_CASE("Query evaluation") {
+      ommatidia::external::Server<ExampleDetection> server(
+          std::move(GenerateExampleData()));
+
+      // Create detection
+      {
+        auto response = server.run([](crow::request& request) {
+          request.method = crow::HTTPMethod::POST;
+          request.url = "/detections/";
+          request.body = crow::json::wvalue({std::make_pair("width", 4),
+                                             std::make_pair("height", 5)})
+                             .dump();
+        });
+        REQUIRE(response.code == 200);
+      }
+
+      // Send the image to the server
+      {
+        auto response = server.run([](crow::request& request) {
+          request.method = crow::HTTPMethod::POST;
+          request.url = "/detections/0/evaluate/";
+
+          cv::Mat image = cv::Mat::zeros(5, 4, CV_8UC1);
+          std::vector<unsigned char> buffer;
+          cv::imencode(".png", image, buffer);
+          request.body.assign(reinterpret_cast<char*>(buffer.data()),
+                              buffer.size());
+        });
+        REQUIRE(response.code == 200);
+      }
+
+      // Query evaluation
+      {
+        auto response = server.run([](crow::request& request) {
+          request.method = crow::HTTPMethod::GET;
+          request.url = "/detections/0/evaluate/0/";
+        });
+        REQUIRE(response.code == 200);
+
+        auto json = crow::json::load(response.body);
+        CHECK(json.t() == crow::json::type::Object);
+        CHECK(json["x"] == 5);
+        CHECK(json["y"] == 4);
+        CHECK(json["major"] == 5.0);
+        CHECK(json["minor"] == 4.0);
+        CHECK(static_cast<float>(json["angle"].d()) ==
+              doctest::Approx(0.733f).epsilon(0.01));
+        CHECK(json["confidence"] == 0.22);
       }
     }
   }

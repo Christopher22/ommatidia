@@ -19,22 +19,22 @@ class Detection : public ommatidia::Detection {
                   "Not a valued pupil detection method");
   }
 
-  inline std::optional<Error> Predict(cv::InputArray sample,
-                                      float timestamp) noexcept override {
+  inline Result<PredictionIndex> Predict(cv::InputArray sample, float timestamp) noexcept override {
     auto pupil = method_.runWithConfidence(sample.getMat());
-    auto confidence = pupil.confidence;
+    const auto confidence = pupil.confidence;
+    const auto index = ellipses_.size();
     ellipses_.emplace_back(pupil, confidence);
-    return std::nullopt;
+    return index;
   }
 
   /// Get the number of stored predictions.
-  inline std::size_t GetNumPredictions() const noexcept override {
+  inline PredictionIndex GetNumPredictions() const noexcept override {
     return ellipses_.size();
   }
 
   /// Get the prediction at a specific sample.
   inline std::optional<JsonValue> GetPrediction(
-      std::size_t index) const noexcept override {
+      PredictionIndex index) const noexcept override {
     if (index < ellipses_.size()) {
       return ellipses_[index].Serialize();
     } else {

@@ -34,7 +34,7 @@ Server::Server(MetaData&& meta_data) noexcept
             return this->PostEvaluation(detection, request);
           });
 
-  CROW_ROUTE(server_, "/detections/<int>/evaluate/<int>")
+  CROW_ROUTE(server_, "/detections/<int>/evaluate/<int>/")
   ([this](int detection, int sample_index) {
     return this->GetEvaluation(detection, sample_index);
   });
@@ -119,12 +119,10 @@ crow::response Server::PostEvaluation(int detection_index,
   }
 
   // Analyse the image
-  auto detection_result = detection->second->Predict(image, 0.0);
-  if (detection_result.has_value()) {
-    return *detection_result;
-  }
-
-  return crow::response(crow::OK);
+  auto result = detection->second->Predict(image, 0.0);
+  return ommatidia::Check(result, [](PredictionIndex& index) {
+    return crow::response(200, JsonValue(index).dump());
+  });
 }
 
 crow::response Server::GetEvaluation(int detection_index, int sample_index) {
