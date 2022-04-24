@@ -20,9 +20,9 @@ class Server {
   Server(Server const &) = delete;
   Server &operator=(Server const &) = delete;
 
-  void run(uint16_t port);
-  crow::response run(crow::request request);
-  crow::response run(std::function<void(crow::request&)> callback);
+  void Run(uint16_t port);
+  crow::response Run(crow::request request);
+  crow::response Run(std::function<void(crow::request &)> callback);
 
  protected:
   Server(MetaData &&meta_data) noexcept;

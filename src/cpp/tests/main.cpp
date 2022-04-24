@@ -161,7 +161,7 @@ TEST_SUITE("Server") {
         std::move(GenerateExampleData()));
 
     auto response =
-        server.run([](crow::request& request) { request.url = "/"; });
+        server.Run([](crow::request& request) { request.url = "/"; });
     REQUIRE(response.code == 200);
 
     auto json_body = crow::json::load(response.body);
@@ -181,7 +181,7 @@ TEST_SUITE("Server") {
       ommatidia::external::Server<ExampleDetection> server(
           std::move(GenerateExampleData()));
 
-      auto response = server.run(
+      auto response = server.Run(
           [](crow::request& request) { request.url = "/detections/"; });
       REQUIRE(response.code == 200);
 
@@ -194,7 +194,7 @@ TEST_SUITE("Server") {
       ommatidia::external::Server<ExampleDetection> server(
           std::move(GenerateExampleData()));
 
-      auto response = server.run(
+      auto response = server.Run(
           [](crow::request& request) { request.url = "/detections/42/"; });
       REQUIRE(response.code == 404);
     }
@@ -203,7 +203,7 @@ TEST_SUITE("Server") {
       ommatidia::external::Server<ExampleDetection> server(
           std::move(GenerateExampleData()));
 
-      auto response = server.run([](crow::request& request) {
+      auto response = server.Run([](crow::request& request) {
         request.method = crow::HTTPMethod::POST;
         request.url = "/detections/";
         request.body = crow::json::wvalue({std::make_pair("width", 4),
@@ -217,12 +217,12 @@ TEST_SUITE("Server") {
       CHECK(json_body.i() == 0);
 
       SUBCASE("Queryable") {
-        auto response = server.run(
+        auto response = server.Run(
             [](crow::request& request) { request.url = "/detections/0/"; });
         CHECK(response.code == 200);
       }
       SUBCASE("Findable in list") {
-        auto response = server.run(
+        auto response = server.Run(
             [](crow::request& request) { request.url = "/detections/"; });
         REQUIRE(response.code == 200);
 
@@ -238,7 +238,7 @@ TEST_SUITE("Server") {
           std::move(GenerateExampleData()));
 
       // The correct creation is checked by the previous test
-      auto response = server.run([](crow::request& request) {
+      auto response = server.Run([](crow::request& request) {
         request.method = crow::HTTPMethod::POST;
         request.url = "/detections/";
         request.body = crow::json::wvalue({std::make_pair("width", 4),
@@ -247,19 +247,19 @@ TEST_SUITE("Server") {
       });
       REQUIRE(response.code == 200);
 
-      server.run([](crow::request& request) {
+      server.Run([](crow::request& request) {
         request.method = crow::HTTPMethod::DELETE;
         request.url = "/detections/0/";
       });
       REQUIRE(response.code == 200);
 
       SUBCASE("Not queryable") {
-        auto response = server.run(
+        auto response = server.Run(
             [](crow::request& request) { request.url = "/detections/0/"; });
         CHECK(response.code == 404);
       }
       SUBCASE("Not findable in list") {
-        auto response = server.run(
+        auto response = server.Run(
             [](crow::request& request) { request.url = "/detections/"; });
         REQUIRE(response.code == 200);
 
@@ -273,7 +273,7 @@ TEST_SUITE("Server") {
       ommatidia::external::Server<ExampleDetection> server(
           std::move(GenerateExampleData()));
 
-      auto response = server.run([](crow::request& request) {
+      auto response = server.Run([](crow::request& request) {
         request.method = crow::HTTPMethod::DELETE;
         request.url = "/detections/0/";
       });
@@ -288,7 +288,7 @@ TEST_SUITE("Server") {
 
       // Create detection
       {
-        auto response = server.run([](crow::request& request) {
+        auto response = server.Run([](crow::request& request) {
           request.method = crow::HTTPMethod::POST;
           request.url = "/detections/";
           request.body = crow::json::wvalue({std::make_pair("width", 4),
@@ -314,7 +314,7 @@ TEST_SUITE("Server") {
                               buffer.size());
         }
 
-        auto response = server.run(request);
+        auto response = server.Run(request);
         REQUIRE(response.code == 200);
 
         auto json_body = crow::json::load(response.body);
@@ -329,7 +329,7 @@ TEST_SUITE("Server") {
 
       // Create detection
       {
-        auto response = server.run([](crow::request& request) {
+        auto response = server.Run([](crow::request& request) {
           request.method = crow::HTTPMethod::POST;
           request.url = "/detections/";
           request.body = crow::json::wvalue({std::make_pair("width", 4),
@@ -341,7 +341,7 @@ TEST_SUITE("Server") {
 
       // Send the image to the server
       {
-        auto response = server.run([](crow::request& request) {
+        auto response = server.Run([](crow::request& request) {
           request.method = crow::HTTPMethod::POST;
           request.url = "/detections/0/evaluate/";
 
@@ -356,7 +356,7 @@ TEST_SUITE("Server") {
 
       // Query evaluation
       {
-        auto response = server.run([](crow::request& request) {
+        auto response = server.Run([](crow::request& request) {
           request.method = crow::HTTPMethod::GET;
           request.url = "/detections/0/evaluate/0/";
         });

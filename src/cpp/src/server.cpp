@@ -42,18 +42,18 @@ Server::Server(MetaData&& meta_data) noexcept
   server_.validate();
 }
 
-void Server::run(uint16_t port) { server_.port(port).multithreaded().run(); }
+void Server::Run(uint16_t port) { server_.port(port).multithreaded().run(); }
 
-crow::response Server::run(crow::request request) {
+crow::response Server::Run(crow::request request) {
   crow::response response;
   server_.handle(request, response);
   return response;
 }
 
-crow::response Server::run(std::function<void(crow::request&)> callback) {
+crow::response Server::Run(std::function<void(crow::request&)> callback) {
   crow::request request;
   callback(request);
-  return this->run(request);
+  return this->Run(request);
 }
 
 crow::response Server::GetRoot() {
