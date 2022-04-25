@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.15 FATAL_ERROR)
 project(Ommatidia
-    VERSION 0.1
+    VERSION 0.2
     DESCRIPTION "Core parts for running pupil detectors with REST"
     LANGUAGES CXX
 )
@@ -39,11 +39,9 @@ endif()
 
 include(${CPM_DOWNLOAD_LOCATION})
 
-# Install PackageProject to create an importable version of this library
-CPMAddPackage("gh:TheLartians/PackageProject.cmake@1.8.0")
-
 # Find the required dependencies
-CPMAddPackage("gh:CrowCpp/Crow@1.0+1")
+CPMAddPackage("gh:TheLartians/PackageProject.cmake@1.8.0")
+find_package(Crow REQUIRED)
 find_package(OpenCV REQUIRED COMPONENTS core)
 
 # Define the library
@@ -57,7 +55,7 @@ target_compile_options(${PROJECT_NAME} PUBLIC "$<$<COMPILE_LANG_AND_ID:CXX,MSVC>
 target_link_libraries(${PROJECT_NAME} PUBLIC Crow::Crow opencv_core opencv_imgproc opencv_imgcodecs)
 target_include_directories(
   ${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
-                         $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
+                         $<INSTALL_INTERFACE:include/ommatidia>
 )
 
 # Allow the library to be imported by other CMake scripts
@@ -68,15 +66,14 @@ packageProject(
   NAMESPACE ${PROJECT_NAME}
   BINARY_DIR ${PROJECT_BINARY_DIR}
   INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include
-  INCLUDE_DESTINATION include/${PROJECT_NAME}-${PROJECT_VERSION}
+  INCLUDE_DESTINATION include/ommatidia
   VERSION_HEADER "${VERSION_HEADER_LOCATION}"
   COMPATIBILITY SameMajorVersion
   DEPENDENCIES "Crow;OpenCV"
 )
 
 # Support tests
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-#if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
   CPMAddPackage("gh:doctest/doctest@2.4.8")
 
   file(GLOB_RECURSE test_cpp CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp")
