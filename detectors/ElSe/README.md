@@ -1,0 +1,2 @@
+# ElSe
+This folder contains the ElSe pupil detector proposed in [ElSe: Ellipse Selection for Robust Pupil Detection in Real-World Environments](https://doi.org/10.1145/2857491.2857505) by W. Fuhl, T. C. Santini, T. C. Kübler, and E. Kasneci. The code and the algorithm are for non-commercial use only and are based upon the implementation in [Open-PupilEXT](https://github.com/openPupil/Open-PupilEXT).
