@@ -1,0 +1,2 @@
+# ElSe
+This folder contains the ElSe pupil detector proposed in [ExCuSe: Robust Pupil Detection in Real-World Scenarios](https://doi.org/10.1007/978-3-319-23192-1_4) by W. Fuhl, T. Kübler, K. Sippel, W. Rosenstiel, and E. Kasneci . The code and the algorithm are for non-commercial use only and are based upon the implementation in [Open-PupilEXT](https://github.com/openPupil/Open-PupilEXT).
