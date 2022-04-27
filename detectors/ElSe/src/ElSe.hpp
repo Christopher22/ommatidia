@@ -10,7 +10,7 @@
   non-comercial use only.
 */
 
-// Edited by Christopher Gundler to fit ommatidia:
+// The following line was edited by Christopher Gundler to fit ommatidia:
 #include <ommatidia/external/pupil_detection_method.hpp>
 
 class ElSe : public PupilDetectionMethod {
