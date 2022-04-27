@@ -1,0 +1,2 @@
+# PuRe
+This folder contains the PuRe pupil detector proposed in [Robust pupil detection for real-time pervasive eye tracking](https://doi.org/10.1016/j.cviu.2018.02.002) by T. Santini, W. Fuhl, E. Kasneci. The code and the algorithm are licensed under a custom license and are based upon the implementation in [Open-PupilEXT](https://github.com/openPupil/Open-PupilEXT).
