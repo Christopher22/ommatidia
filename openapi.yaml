@@ -159,7 +159,7 @@ components:
                 name:
                     type: string
                     description: The name of the detector.
-                publication:
+                additional_information:
                     type: string
                     description: The DOI of the publication.
                 authors:
@@ -170,7 +170,7 @@ components:
                 license:
                     type: string
                     description: The license of the detector.
-                output:
+                prediction:
                     type: string
                     description: The output of the detector.
                     enum:
