@@ -6,22 +6,34 @@
 #include <crow/json.h>
 #include <opencv2/imgcodecs.hpp>
 
-#include <detection_params.hpp>
+#include <image_size.hpp>
 #include <meta_data.hpp>
 #include <predictions/ellipse.hpp>
+#include <predictions/pupil_center.hpp>
 #include <external/server.hpp>
 
 #include "external/example_detection.hpp"
 
 static ommatidia::MetaData GenerateExampleData() {
-  return ommatidia::MetaData(
-      "ExampleDetector", {"Jane Doe", "Max Mustermann"},
-      "https://more-information.tld", ommatidia::License::GPL,
-      ommatidia::PredictionType::Ellipse, ommatidia::TrainingType::Unsupported,
-      ommatidia::SupportStreaming::Yes);
+  return ommatidia::MetaData("ExampleDetector", {"Jane Doe", "Max Mustermann"},
+                             "https://more-information.tld",
+                             ommatidia::License::GPL,
+                             ommatidia::PredictionType::Ellipse);
 }
 
+// Test the output send the the clients
 TEST_SUITE("Prediction Output") {
+  TEST_CASE("Pupil center") {
+    ommatidia::PupilCenter center(4, 5, 0.7);
+    const auto serialized_ellipse = center.Serialize().dump();
+
+    auto json = crow::json::load(serialized_ellipse);
+    CHECK(json["type"] == "Point");
+    CHECK(json["x"] == 4);
+    CHECK(json["y"] == 5);
+    CHECK(json["confidence"] == 0.7);
+  }
+
   TEST_CASE("Ellipse: From constructor") {
     ommatidia::Size value1, value2;
     SUBCASE("Min-Max order") {
@@ -38,6 +50,7 @@ TEST_SUITE("Prediction Output") {
     const auto serialized_ellipse = ellipse.Serialize().dump();
 
     auto json = crow::json::load(serialized_ellipse);
+    CHECK(json["type"] == "Ellipse");
     CHECK(json["x"] == 4);
     CHECK(json["y"] == 5);
     CHECK(json["major"] == 21.0);
@@ -56,6 +69,7 @@ TEST_SUITE("Prediction Output") {
     const auto serialized_ellipse = ellipse.Serialize().dump();
 
     auto json = crow::json::load(serialized_ellipse);
+    CHECK(json["type"] == "Ellipse");
     CHECK(json["x"] == 5);
     CHECK(json["y"] == 4);
     CHECK(json["major"] == 7.0);
@@ -66,9 +80,9 @@ TEST_SUITE("Prediction Output") {
   }
 }
 
-TEST_SUITE("DetectionParams") {
+TEST_SUITE("ImageSize") {
   TEST_CASE("Creation") {
-    ommatidia::DetectionParams params(42, 22);
+    ommatidia::ImageSize params(42, 22);
     CHECK(params.Width() == 42);
     CHECK(params.Height() == 22);
   }
@@ -80,8 +94,8 @@ TEST_SUITE("DetectionParams") {
       input = "{ \"width\": 42, \"height\": 22, \"unknown_key\": 1 }";
     }
 
-    auto params_result = ommatidia::DetectionParams::Parse(input);
-    auto& params = std::get<ommatidia::DetectionParams>(params_result);
+    auto params_result = ommatidia::ImageSize::Parse(input);
+    auto& params = std::get<ommatidia::ImageSize>(params_result);
     CHECK(params.Width() == 42);
     CHECK(params.Height() == 22);
   }
@@ -94,7 +108,6 @@ TEST_SUITE("MetaData") {
     CHECK(meta.AdditionalInformation() == "https://more-information.tld");
     CHECK(meta.LicenseInformation() == ommatidia::License::GPL);
     CHECK(meta.PredictionOutput() == ommatidia::PredictionType::Ellipse);
-    CHECK(meta.TrainingSupport() == ommatidia::TrainingType::Unsupported);
 
     auto authors = meta.Authors();
     REQUIRE(authors.size() == 2);
@@ -110,7 +123,6 @@ TEST_SUITE("MetaData") {
     CHECK(meta.AdditionalInformation() == "https://more-information.tld");
     CHECK(meta.LicenseInformation() == ommatidia::License::GPL);
     CHECK(meta.PredictionOutput() == ommatidia::PredictionType::Ellipse);
-    CHECK(meta.TrainingSupport() == ommatidia::TrainingType::Unsupported);
 
     auto authors = meta.Authors();
     REQUIRE(authors.size() == 2);
@@ -126,7 +138,6 @@ TEST_SUITE("MetaData") {
     CHECK(meta.AdditionalInformation() == "https://more-information.tld");
     CHECK(meta.LicenseInformation() == ommatidia::License::GPL);
     CHECK(meta.PredictionOutput() == ommatidia::PredictionType::Ellipse);
-    CHECK(meta.TrainingSupport() == ommatidia::TrainingType::Unsupported);
 
     auto authors = meta.Authors();
     CHECK(authors.size() == 2);
@@ -145,8 +156,6 @@ TEST_SUITE("MetaData") {
     CHECK(json_body["authors"][1] == "Max Mustermann");
     CHECK(json_body["license"] == "GPL");
     CHECK(json_body["prediction"] == "Ellipse");
-    CHECK(json_body["training"] == "Unsupported");
-    CHECK(json_body["supports_streaming"]);
   }
 }
 
@@ -172,8 +181,6 @@ TEST_SUITE("Server") {
     CHECK(json_body["authors"][1] == "Max Mustermann");
     CHECK(json_body["license"] == "GPL");
     CHECK(json_body["prediction"] == "Ellipse");
-    CHECK(json_body["training"] == "Unsupported");
-    CHECK(json_body["supports_streaming"]);
   }
 
   TEST_SUITE("Detections") {
@@ -279,10 +286,8 @@ TEST_SUITE("Server") {
       });
       REQUIRE(response.code == 404);
     }
-  }
 
-  TEST_SUITE("Evaluation") {
-    TEST_CASE("Add image for evaluation") {
+    TEST_CASE("Evaluation") {
       ommatidia::external::Server<ExampleDetection> server(
           std::move(GenerateExampleData()));
 
@@ -291,9 +296,7 @@ TEST_SUITE("Server") {
         auto response = server.Run([](crow::request& request) {
           request.method = crow::HTTPMethod::POST;
           request.url = "/detections/";
-          request.body = crow::json::wvalue({std::make_pair("width", 4),
-                                             std::make_pair("height", 5)})
-                             .dump();
+          request.body = crow::json::wvalue({}).dump();
         });
         REQUIRE(response.code == 200);
       }
@@ -302,7 +305,7 @@ TEST_SUITE("Server") {
       {
         crow::request request;
         request.method = crow::HTTPMethod::POST;
-        request.url = "/detections/0/evaluate/";
+        request.url = "/detections/0/";
 
         {
           cv::Mat image = cv::Mat::zeros(5, 4, CV_8UC1);
@@ -315,51 +318,6 @@ TEST_SUITE("Server") {
         }
 
         auto response = server.Run(request);
-        REQUIRE(response.code == 200);
-
-        auto json_body = crow::json::load(response.body);
-        CHECK(json_body.t() == crow::json::type::Number);
-        CHECK(json_body.i() == 0);
-      }
-    }
-
-    TEST_CASE("Query evaluation") {
-      ommatidia::external::Server<ExampleDetection> server(
-          std::move(GenerateExampleData()));
-
-      // Create detection
-      {
-        auto response = server.Run([](crow::request& request) {
-          request.method = crow::HTTPMethod::POST;
-          request.url = "/detections/";
-          request.body = crow::json::wvalue({std::make_pair("width", 4),
-                                             std::make_pair("height", 5)})
-                             .dump();
-        });
-        REQUIRE(response.code == 200);
-      }
-
-      // Send the image to the server
-      {
-        auto response = server.Run([](crow::request& request) {
-          request.method = crow::HTTPMethod::POST;
-          request.url = "/detections/0/evaluate/";
-
-          cv::Mat image = cv::Mat::zeros(5, 4, CV_8UC1);
-          std::vector<unsigned char> buffer;
-          cv::imencode(".png", image, buffer);
-          request.body.assign(reinterpret_cast<char*>(buffer.data()),
-                              buffer.size());
-        });
-        REQUIRE(response.code == 200);
-      }
-
-      // Query evaluation
-      {
-        auto response = server.Run([](crow::request& request) {
-          request.method = crow::HTTPMethod::GET;
-          request.url = "/detections/0/evaluate/0/";
-        });
         REQUIRE(response.code == 200);
 
         auto json = crow::json::load(response.body);

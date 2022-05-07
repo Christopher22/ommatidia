@@ -1,191 +1,240 @@
 openapi: 3.0.0
+
 info:
-    version: 0.1.0
-    title: Ommatidia
-    description: Unified access to Pupil detectors
+  title: Ommatidia
+  version: 0.2.0
+  description: >-
+    Unified and simplistic API to evaluate pupil detection algorithms for
+    video-based eye tracking.
+  contact:
+    email: christopher@gundler.de
+    name: Christopher Gundler
+    url: https://gundler.de
+    
 paths:
-    /:
-        get:
-            description: Get the meta data of the detector
-            responses:
-                "200":
-                    description: "Meta data of the detector"
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/MetaData"
+  /:
+    get:
+      summary: Get the meta data of the detector
+      responses:
+        '200':
+          description: Meta data regarding the pupil detection algorithm
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetaData'
+  
+  /config/:
+    get:
+      summary: Define the configurations for the pupil detection algorithm as an JSON Schema.
+      responses:
+        '200':
+          description: Configuration specified as an JSON Schema.
+          content:
+            application/json:
+                schema:
+                  $ref: '#/components/schemas/Config'
+    
+  /detections/:
+    get:
+      summary: Returns a list of running pupil detection algorithms.
+      responses:
+        '200':
+          description: A list of "detectionId" for running pupil detection algorithms.
+          content:
+            application/json:
+                schema:
+                  type: "array"
+                  items:
+                    type: "integer"
+      tags:
+        - Detections
+    post:
+      summary: Initialize a new pupil detection algorithm with specific configuration.
+      requestBody:
+        $ref: '#/components/requestBodies/Config'
+      responses:
+        '200':
+          description: Instance successfully created.
+        '400':
+          description: The given configuration is invalid.
+          content:
+            text/plain:
+                schema:
+                  type: string
 
-    /detections/:
-        get:
-            description: Returns a list of running detections
-            responses:
-                "200":
-                    description: Successful response
-        post:
-            description: Initialize a new detection.
-            responses:
-                "200":
-                    description: Detection successfully created.
+      tags:
+        - Detections
+        
+  /detections/{detectionId}/:
+    get:
+      summary: Query an pupil detection algorithm and its configuration.
+      parameters:
+        - $ref: '#/components/parameters/DetectionId'
+      responses:
+        '200':
+          description: The specified configuration on creation.
+          content:
+            application/json:
+              schema:
+                type: "object"
+        '404':
+          description: The selected ID was not found
+          content:
+            text/plain:
+                schema:
+                  type: string
+      tags:
+        - Detections
+    delete:
+      summary: Delete the instance of the pupil detection algorithm and remove all associated resources.
+      parameters:
+        - $ref: '#/components/parameters/DetectionId'
+      responses:
+        '200':
+          description: The detection was successfully deleted.
+        '404':
+          description: The selected ID was not found
+      tags:
+        - Detections
+    post:
+      summary: Evaluate a given image with the configured pupil detection algorihm.
+      requestBody:
+        $ref: '#/components/requestBodies/Sample'
+      parameters:
+        - $ref: '#/components/parameters/DetectionId'
+      responses:
+        '200':
+          description: The estimated pupil.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Point'
+                  - $ref: '#/components/schemas/Ellipse'
+        '404':
+          description: The selected ID was not found
+      tags:
+        - Detections
 
-    /detections/{detectionId}:
-        get:
-            summary: Get the detection by its ID
-            parameters:
-                - $ref: "#/components/parameters/DetectionId"
-            responses:
-                "200":
-                    description: TODO
-                "404":
-                    description: "The selected ID was not found"
-        delete:
-            summary: Delete the detection and remove all associated resources.
-            parameters:
-                - $ref: "#/components/parameters/DetectionId"
-            responses:
-                "200":
-                    description: The detection was successfully deleted.
-                "404":
-                    description: "The selected ID was not found"
-
-    /detection/{detectionId}/train/:
-        post:
-            summary: Add training data to the instance of the detector algorithm
-            parameters:
-                - $ref: "#/components/parameters/DetectionId"
-            requestBody:
-                $ref: "#/components/requestBodies/Sample"
-            responses:
-                "200":
-                    description: The image was added as training sample to the detector.
-                "409":
-                    description: The detector is already used for evaluation.
-                "501":
-                    description: Training the detector is not supported
-
-    /detection/{detectionId}/evaluate/:
-        post:
-            summary: Add data to be evaluated
-            requestBody:
-                $ref: "#/components/requestBodies/Sample"
-            parameters:
-                - $ref: "#/components/parameters/DetectionId"
-            responses:
-                "200":
-                    description: The data was added and could be queried.
-                    content:
-                        application/json:
-                            schema:
-                                $ref: "#/components/schemas/SampleId"
-                "409":
-                    description: The detector does not support streaming and a first result was already queried.
-
-    /detection/{detectionId}/evaluate/{evaluationId}:
-        get:
-            summary: Get the estimated pupil within a sample
-            parameters:
-                - $ref: "#/components/parameters/DetectionId"
-                - in: path
-                  name: evaluationId
-                  schema:
-                      $ref: "#/components/schemas/SampleId"
-                  required: true
-                  description: Identifier of the detection
-            responses:
-                "200":
-                    description: The estimated pupil.
-                    content:
-                        application/json:
-                            schema:
-                                oneOf:
-                                    - $ref: "#/components/schemas/Point"
-                                    - $ref: "#/components/schemas/Ellipse"
-                "404":
-                    description: The sample or detection was not found
 components:
-    requestBodies:
-        Sample:
-            description: The sample stored as PNG file.
-            required: true
-            content:
-                image/png:
-                    schema:
-                        type: string
-                        format: binary
-    parameters:
-        DetectionId:
-            in: path
-            name: detectionId
-            schema:
-                type: string
-            required: true
-            description: Identifier of the detection
-    schemas:
-        Point:
-            type: object
-            properties:
-                x:
-                    type: number
-                    format: float
-                    minimum: 0.0
-                    maximum: 1.0
-                y:
-                    type: number
-                    format: float
-                    minimum: 0.0
-                    maximum: 1.0
-        Ellipse:
-            type: object
-            properties:
-                center:
-                    $ref: "#/components/schemas/Point"
-                major:
-                    type: number
-                    format: float
-                    minimum: 0.0
-                    maximum: 1.0
-                minor:
-                    type: number
-                    format: float
-                    minimum: 0.0
-                    maximum: 1.0
-                rotation:
-                    type: number
-                    format: float
-                    minimum: 0.0
-                    maximum: 360.0
-        MetaData:
-            type: object
-            properties:
-                name:
-                    type: string
-                    description: The name of the detector.
-                additional_information:
-                    type: string
-                    description: The DOI of the publication.
-                authors:
-                    type: array
-                    items:
-                        type: string
-                    description: The authors of the detector.
-                license:
-                    type: string
-                    description: The license of the detector.
-                prediction:
-                    type: string
-                    description: The output of the detector.
-                    enum:
-                        - Point
-                        - Ellipse
-                        - Mask
-                training:
-                    type: string
-                    description: Whether or not the detector requires or supports a training
-                    enum:
-                        - Unsupported
-                        - Optional
-                        - Required
-                supports_streaming:
-                    type: boolean
-                    description: Whether or not the detector requires all pupils to be available before yielding its values.
-        SampleId:
-            type: integer
+  requestBodies:
+    Sample:
+      description: The sample encoded as an image.
+      required: true
+      content:
+        image/png:
+          schema:
+            type: string
+            format: binary
+        image/jpg:
+          schema:
+            type: string
+            format: binary
+    Config:
+      description: The configuration of the detection algorithm following the schema specified.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: "object"
+    
+  parameters:
+    DetectionId:
+      in: path
+      name: detectionId
+      schema:
+        type: integer
+        minimum: 0
+      required: true
+      description: Identifier for the running instance of pupil detection algorithm.
+
+  schemas:
+    Config:
+      type: object
+      description: "The definition of configuration regarding detector instances, i. e. the parameter. It must be a valid JSON schema."
+      properties:
+        type:
+          type: "string"
+          enum: ["object"]
+          description: "Object definition as in https://json-schema.org/draft/2020-12/meta/core"
+      additionalProperties: true
+      required: ["type"]
+    Confidence:
+      type: number
+      description: "The confidence of the algorithm in its prediction"
+    Point:
+      type: object
+      properties:
+        type:
+          type: "string"
+          enum: ["Point"]
+        x: 
+          $ref: '#/components/schemas/Position'
+        y:
+          $ref: '#/components/schemas/Position'
+        confidence:
+          $ref: '#/components/schemas/Confidence'
+      required: [type, x, y]
+    Ellipse:
+      type: object
+      properties:
+        type:
+          type: "string"
+          enum: ["Ellipse"]
+        x:
+          $ref: '#/components/schemas/Position'
+        y:
+          $ref: '#/components/schemas/Position'
+        major:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        minor:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        rotation:
+          description: "Rotation in radians"
+          type: number
+          format: float
+          minimum: 0
+          maximum: 6.28319
+        confidence:
+          $ref: '#/components/schemas/Confidence'
+      required: [type, x, y, major, minor, rotation]
+    MetaData:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the detector.
+        additional_information:
+          type: string
+          description: The DOI of the publication.
+        authors:
+          type: array
+          items:
+            type: string
+          description: The authors of the detector.
+        license:
+          type: string
+          description: The license of the detector.
+        prediction:
+          type: string
+          description: The output of the detector.
+          enum:
+            - Point
+            - Ellipse
+    Position:
+      description: "Relative position within an image. 1.0 refers to the width or height of the image, respectively."
+      type: number
+      format: float
+      minimum: 0
+      maximum: 1
+
+tags:
+  - name: Detections
+    description: Instances of the implemented pupil detection algorithm
+

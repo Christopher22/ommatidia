@@ -1,8 +1,8 @@
-#include "../include/detection_params.hpp"
+#include "../include/image_size.hpp"
 
 namespace ommatidia {
 
-Result<DetectionParams> DetectionParams::Parse(std::string_view request) {
+Result<ImageSize> ImageSize::Parse(std::string_view request) {
   auto json_body = crow::json::load(request.data(), request.size());
   if (json_body.error()) {
     return Error("Malformed JSON in body", crow::BAD_REQUEST);
@@ -10,8 +10,7 @@ Result<DetectionParams> DetectionParams::Parse(std::string_view request) {
   return Parse(json_body);
 }
 
-Result<DetectionParams> DetectionParams::Parse(
-    const crow::json::rvalue& request) {
+Result<ImageSize> ImageSize::Parse(const crow::json::rvalue& request) {
   static const char* WIDTH = "width";
   static const char* HEIGTH = "height";
 
@@ -34,8 +33,8 @@ Result<DetectionParams> DetectionParams::Parse(
     return Error("Image dimensions invalid", crow::BAD_REQUEST);
   }
 
-  return Result<DetectionParams>(
-      DetectionParams((unsigned int)width, (unsigned int)height));
+  return Result<ImageSize>(
+      ImageSize((unsigned int)width, (unsigned int)height));
 }
 
 }  // namespace ommatidia

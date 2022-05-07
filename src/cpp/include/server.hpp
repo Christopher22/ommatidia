@@ -9,8 +9,8 @@
 
 #include "detection.hpp"
 #include "meta_data.hpp"
-#include "detection_params.hpp"
 #include "error.hpp"
+#include "types.hpp"
 
 namespace ommatidia {
 
@@ -26,9 +26,8 @@ class Server {
 
  protected:
   Server(MetaData &&meta_data) noexcept;
-  virtual Result<std::unique_ptr<Detection>> CreateDetection(
-      DetectionParams parameters) noexcept = 0;
-
+  virtual Result<std::unique_ptr<Detection>> CreateDetection(const ommatidia::JsonInput &config) noexcept = 0;
+  
  private:
   crow::SimpleApp server_;
   MetaData meta_data_;
@@ -39,9 +38,7 @@ class Server {
   crow::response PostDetections(const crow::request &request);
   crow::response GetDetection(int detection_index);
   crow::response DeleteDetection(int detection_index);
-  crow::response PostEvaluation(int detection_index,
-                                const crow::request &request);
-  crow::response GetEvaluation(int detection_index, int sample_index);
+  crow::response Evaluate(int detection_index, const crow::request &request);
 };
 
 }  // namespace ommatidia

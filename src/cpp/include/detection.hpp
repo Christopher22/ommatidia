@@ -17,15 +17,11 @@ class Detection {
   Detection(Detection const &) = delete;
   Detection &operator=(Detection const &) = delete;
 
+  /// Get the current config of the algorithm.
+  virtual JsonValue GetConfig() noexcept { return JsonValue(); }
+
   /// Analye the given sample and store the prediction.
-  virtual Result<PredictionIndex> Predict(cv::InputArray sample, float timestamp) noexcept = 0;
-
-  /// Get the number of stored predictions.
-  virtual PredictionIndex GetNumPredictions() const noexcept = 0;
-
-  /// Get the prediction at a specific sample.
-  virtual std::optional<JsonValue> GetPrediction(
-      PredictionIndex index) const noexcept = 0;
+  virtual Result<JsonValue> Predict(cv::InputArray sample) noexcept = 0;
 
  protected:
   constexpr Detection() noexcept {}

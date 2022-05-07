@@ -20,6 +20,7 @@ Ellipse::Ellipse(const cv::RotatedRect &rotated_rect, Confidence confidence)
 
 JsonValue Ellipse::Serialize() const noexcept {
   return JsonValue({
+      std::make_pair("type", "Ellipse"),
       std::make_pair("x", x_),
       std::make_pair("y", y_),
       std::make_pair("major", static_cast<double>(major_)),

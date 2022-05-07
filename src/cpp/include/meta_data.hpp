@@ -10,25 +10,17 @@
 namespace ommatidia {
 
 // The type of prediction supported by the choosen detector.
-enum class PredictionType { Point, Ellipse, Mask };
-
-// An indicator for type of training supported by the choosen detector.
-enum class TrainingType { Unsupported, Optional, Required };
+enum class PredictionType { Point, Ellipse };
 
 // The license which applies for any usage of the detector.
 enum class License { PublicDomain, MIT, Apache, GPL, AGPL, Custom };
-
-// Whether or not the evaluation can get queried before all samples are given
-// to the detector.
-enum class SupportStreaming { Yes = true, No = false };
 
 class MetaData : public crow::returnable {
  public:
   MetaData(std::string_view name,
            std::initializer_list<std::string_view> authors,
            std::string_view additional_information, License license,
-           PredictionType prediction_type, TrainingType training_type,
-           SupportStreaming supports_streaming);
+           PredictionType prediction_type);
   MetaData(MetaData const &) = default;
   inline MetaData(MetaData &&moved_meta_data) noexcept
       : crow::returnable("text/json"),
@@ -37,9 +29,7 @@ class MetaData : public crow::returnable {
         additional_information_(
             std::move(moved_meta_data.additional_information_)),
         license_(moved_meta_data.license_),
-        output_(moved_meta_data.output_),
-        training_(moved_meta_data.training_),
-        supports_streaming_(moved_meta_data.supports_streaming_) {}
+        output_(moved_meta_data.output_) {}
 
   virtual ~MetaData() {}
   MetaData &operator=(MetaData const &) = delete;
@@ -51,11 +41,7 @@ class MetaData : public crow::returnable {
     return additional_information_;
   }
   inline License LicenseInformation() const noexcept { return license_; }
-  inline TrainingType TrainingSupport() const noexcept { return training_; }
   inline PredictionType PredictionOutput() const noexcept { return output_; }
-  inline SupportStreaming StreamingSupport() const noexcept {
-    return supports_streaming_;
-  }
 
  protected:
   std::string name_;
@@ -63,28 +49,13 @@ class MetaData : public crow::returnable {
   std::string additional_information_;
   License license_;
   PredictionType output_;
-  TrainingType training_;
-  SupportStreaming supports_streaming_;
 
   static constexpr std::string_view AsString(PredictionType prediction) {
     switch (prediction) {
       case PredictionType::Point:
         return "Point";
-      case PredictionType::Ellipse:
+      default:
         return "Ellipse";
-      default:
-        return "Mask";
-    }
-  }
-
-  static constexpr std::string_view AsString(TrainingType training) {
-    switch (training) {
-      case TrainingType::Unsupported:
-        return "Unsupported";
-      case TrainingType::Optional:
-        return "Optional";
-      default:
-        return "Required";
     }
   }
 

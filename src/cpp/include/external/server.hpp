@@ -13,8 +13,15 @@ class Server : public ommatidia::Server {
 
  protected:
   inline Result<std::unique_ptr<ommatidia::Detection>> CreateDetection(
-      DetectionParams parameters) noexcept override {
+      const JsonInput &configuration) noexcept override {
     std::unique_ptr<Detection<T>> detector = std::make_unique<Detection<T>>();
+
+    // Try to set the configuration
+    auto configuration_result = detector->SetConfig(configuration);
+    if (std::holds_alternative<Error>(configuration_result)) {
+      return std::get<Error>(std::move(configuration_result));
+    }
+
     return detector;
   }
 };

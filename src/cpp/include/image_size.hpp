@@ -9,12 +9,12 @@
 
 namespace ommatidia {
 
-class DetectionParams {
+class ImageSize {
  public:
-  static Result<DetectionParams> Parse(const crow::json::rvalue& request);
-  static Result<DetectionParams> Parse(std::string_view request);
+  static Result<ImageSize> Parse(const crow::json::rvalue& request);
+  static Result<ImageSize> Parse(std::string_view request);
 
-  constexpr DetectionParams(Position width, Position height) noexcept
+  constexpr ImageSize(Position width, Position height) noexcept
       : width_(width), height_(height) {}
 
   constexpr Position Width() const { return width_; }

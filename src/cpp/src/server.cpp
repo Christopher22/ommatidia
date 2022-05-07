@@ -28,16 +28,11 @@ Server::Server(MetaData&& meta_data) noexcept
       .methods(crow::HTTPMethod::DELETE)(
           [this](int detection) { return this->DeleteDetection(detection); });
 
-  CROW_ROUTE(server_, "/detections/<int>/evaluate/")
+  CROW_ROUTE(server_, "/detections/<int>/")
       .methods(crow::HTTPMethod::Post)(
           [this](const crow::request& request, int detection) {
-            return this->PostEvaluation(detection, request);
+            return this->Evaluate(detection, request);
           });
-
-  CROW_ROUTE(server_, "/detections/<int>/evaluate/<int>/")
-  ([this](int detection, int sample_index) {
-    return this->GetEvaluation(detection, sample_index);
-  });
 
   server_.validate();
 }
@@ -70,24 +65,27 @@ crow::response Server::GetDetections() {
 }
 
 crow::response Server::PostDetections(const crow::request& request) {
-  auto params = DetectionParams::Parse(request.body);
-  return Check(params, [this](DetectionParams& params) {
-    auto detection_result = this->CreateDetection(params);
-    if (Error* error = std::get_if<Error>(&detection_result)) {
-      return (crow::response)*error;
-    } else {
-      auto detection =
-          std::get<std::unique_ptr<Detection>>(std::move(detection_result));
-      auto index = this->detections_.size();
-      this->detections_.insert({index, std::move(detection)});
-      return crow::response(200, JsonValue(index).dump());
-    }
-  });
+  auto json_body = crow::json::load(request.body.data(), request.body.size());
+  if (json_body.error() || json_body.t() != crow::json::type::Object) {
+    return Error("Malformed JSON in body", crow::BAD_REQUEST);
+  }
+
+  auto detection_result = this->CreateDetection(json_body);
+  if (Error* error = std::get_if<Error>(&detection_result)) {
+    return (crow::response)*error;
+  } else {
+    auto detection =
+        std::get<std::unique_ptr<Detection>>(std::move(detection_result));
+    auto index = this->detections_.size();
+    this->detections_.insert({index, std::move(detection)});
+    return crow::response(200, JsonValue(index).dump());
+  }
 }
 
 crow::response Server::GetDetection(int detection_index) {
-  if (this->detections_.find(detection_index) != this->detections_.end()) {
-    return crow::response(crow::OK);
+  auto detection_instance = this->detections_.find(detection_index);
+  if (detection_instance != this->detections_.end()) {
+    return detection_instance->second->GetConfig();
   } else {
     return Error("Given detection index is unknown", crow::NOT_FOUND);
   }
@@ -101,15 +99,13 @@ crow::response Server::DeleteDetection(int detection_index) {
   }
 }
 
-crow::response Server::PostEvaluation(int detection_index,
-                                      const crow::request& request) {
+crow::response Server::Evaluate(int detection_index,
+                                const crow::request& request) {
   // Query the detection
   auto detection = this->detections_.find(detection_index);
   if (detection == this->detections_.end()) {
     return Error("Given detection index is unknown", crow::NOT_FOUND);
   }
-
-  auto timestamp = request.url_params.get("t");
 
   // Try to load the image
   cv::_InputArray input_data(request.body.c_str(), (int)request.body.size());
@@ -119,24 +115,8 @@ crow::response Server::PostEvaluation(int detection_index,
   }
 
   // Analyse the image
-  auto result = detection->second->Predict(image, 0.0);
-  return ommatidia::Check(result, [](PredictionIndex& index) {
-    return crow::response(200, JsonValue(index).dump());
-  });
-}
-
-crow::response Server::GetEvaluation(int detection_index, int sample_index) {
-  auto detection = this->detections_.find(detection_index);
-  if (detection == this->detections_.end()) {
-    return Error("Given detection index is unknown", crow::NOT_FOUND);
-  }
-
-  auto sample = detection->second->GetPrediction(sample_index);
-  if (sample.has_value()) {
-    return crow::response(200, *sample);
-  } else {
-    return Error("The given sample is unknown", crow::NOT_FOUND);
-  }
+  auto prediction = detection->second->Predict(image);
+  return ommatidia::Check(prediction, [](auto value) { return value; });
 }
 
 }  // namespace ommatidia
