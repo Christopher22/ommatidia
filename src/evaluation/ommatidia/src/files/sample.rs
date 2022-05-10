@@ -5,8 +5,8 @@ use tokio::{fs::File, io::AsyncReadExt};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Sample {
-    content: Bytes,
-    identifier: Rc<String>,
+    pub content: Bytes,
+    pub identifier: Rc<String>,
 }
 
 impl Sample {

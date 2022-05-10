@@ -1,6 +1,6 @@
 use std::io::Read;
 
-use hyper::{http::request::Builder, Body, StatusCode};
+use hyper::{Body, Method, StatusCode};
 use serde::{Deserialize, Serialize};
 
 use super::connection::Connection;
@@ -55,16 +55,7 @@ impl std::error::Error for Error {}
 
 impl MetaData {
     pub async fn from_container(connection: &mut Connection) -> Result<Self, Error> {
-        let response = match connection
-            .send(
-                Builder::default()
-                    .uri("/")
-                    .header(hyper::header::HOST, "ommatidia")
-                    .body(Body::empty())
-                    .expect("valid request"),
-            )
-            .await
-        {
+        let response = match connection.send(Method::GET, "/", Body::empty()).await {
             Ok((StatusCode::OK, response)) => response,
             Ok((status_code, mut response)) => {
                 let mut error = String::new();

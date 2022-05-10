@@ -3,7 +3,9 @@ use std::io::Read;
 use hyper::{
     body::Buf,
     client::conn::{self, SendRequest},
-    Body, Request, StatusCode,
+    http::request::Builder,
+    http::Method,
+    Body, StatusCode,
 };
 use tokio::{net::TcpStream, task::JoinHandle};
 use tower::ServiceExt;
@@ -35,12 +37,24 @@ impl Connection {
 
     pub async fn send(
         &mut self,
-        request: Request<Body>,
+        method: Method,
+        url: &str,
+        body: Body,
     ) -> Result<(StatusCode, impl Read), hyper::Error> {
         // Wait until the connection is ready
         self.0.ready().await?;
 
-        let response = self.0.send_request(request).await?;
+        let response = self
+            .0
+            .send_request(
+                Builder::default()
+                    .uri(url)
+                    .method(method)
+                    .header(hyper::header::HOST, "ommatidia")
+                    .body(body)
+                    .expect("valid request"),
+            )
+            .await?;
         let status_code = response.status();
         let data = hyper::body::aggregate(response.into_body()).await?.reader();
         Ok((status_code, data))
