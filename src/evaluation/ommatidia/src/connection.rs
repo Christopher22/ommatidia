@@ -10,7 +10,7 @@ use hyper::{
 use tokio::{net::TcpStream, task::JoinHandle};
 use tower::ServiceExt;
 
-use super::Engine;
+use super::engine::Engine;
 
 #[derive(Debug)]
 pub struct Connection(SendRequest<Body>, JoinHandle<()>);

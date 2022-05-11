@@ -1,14 +1,14 @@
-mod config;
 mod connection;
 mod detector;
-mod engine;
+pub mod engine;
 mod errors;
 mod estimate;
 mod files;
 mod meta_data;
+mod util;
 
 pub use self::detector::Detector;
-pub use self::engine::{Engine, RemoteConfig, SslConfig};
+
 pub use self::errors::{ErrorWithId, Errors};
 pub use self::estimate::{Ellipse, Estimate, Point, Position, Radian};
 pub use self::files::{Entry, Error as FileError, Files, Sample, Samples};
