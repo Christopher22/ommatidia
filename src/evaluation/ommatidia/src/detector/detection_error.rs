@@ -1,6 +1,5 @@
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum DetectionError {
-    ConfigInvalid,
     ConfigRejected(String),
     CreationResponseUnexpected(String),
     EstimationInvalid,
@@ -11,9 +10,6 @@ pub enum DetectionError {
 impl std::fmt::Display for DetectionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            DetectionError::ConfigInvalid => {
-                f.write_str("unable to encode specified config as JSON")
-            }
             DetectionError::ConfigRejected(reason) => write!(f, "invalid config: {}", reason),
             DetectionError::CreationResponseUnexpected(reason) => {
                 write!(

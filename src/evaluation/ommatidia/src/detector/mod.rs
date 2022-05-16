@@ -1,13 +1,15 @@
+mod config;
 mod creation_error;
 mod detection;
 mod detection_error;
+mod detectors;
 
 use std::{collections::HashMap, io::Read};
 
 use bollard::{
     container::{
-        Config, CreateContainerOptions, RemoveContainerOptions, StartContainerOptions,
-        StopContainerOptions,
+        Config as ContainerConfig, CreateContainerOptions, RemoveContainerOptions,
+        StartContainerOptions, StopContainerOptions,
     },
     errors::Error as BollardError,
     models::{HostConfig, PortBinding},
@@ -15,9 +17,13 @@ use bollard::{
 use hyper::{Body, Method, StatusCode};
 
 pub use self::{
-    creation_error::CreationError, detection::Detection, detection_error::DetectionError,
+    config::Config,
+    creation_error::CreationError,
+    detection::Detection,
+    detection_error::DetectionError,
+    detectors::{Detectors, Error as DetectorError},
 };
-use super::{connection::Connection, estimate::Estimate, files::Samples, Engine, MetaData};
+use super::{connection::Connection, engine::Engine, estimate::Estimate, files::Samples, MetaData};
 
 #[derive(Debug)]
 pub struct Detector {
@@ -25,12 +31,14 @@ pub struct Detector {
     connection: Connection,
     pub meta_data: MetaData,
     engine: Engine,
+    config: serde_json::Value,
 }
 
 impl Detector {
     pub async fn spawn<T: AsRef<str>>(
         engine: Engine,
         image_name: T,
+        config: serde_json::Value,
     ) -> Result<Detector, CreationError> {
         const TARGET_PORT: &str = "8080/tcp";
         let name = uuid::Uuid::new_v4().to_string();
@@ -43,7 +51,7 @@ impl Detector {
                 Some(CreateContainerOptions {
                     name: name.as_str(),
                 }),
-                Config {
+                ContainerConfig {
                     image: Some(image_name.as_ref()),
                     exposed_ports: Some([(TARGET_PORT, HashMap::default())].into()),
                     host_config: Some(HostConfig {
@@ -93,18 +101,15 @@ impl Detector {
             connection,
             meta_data,
             engine,
+            config,
         })
     }
 
-    pub async fn detect<'a, T: serde::Serialize>(
-        &mut self,
-        mut samples: Samples,
-        config: &T,
-    ) -> Result<Vec<Detection>, DetectionError> {
+    pub async fn detect(&mut self, mut samples: Samples) -> Result<Vec<Detection>, DetectionError> {
         const ERROR_MESSAGE_NO_UTF8: &str = "response is not valid UTF8";
 
         // Instantiate the detector and build the path it is accessible
-        let config = serde_json::to_string(config).or(Err(DetectionError::ConfigInvalid))?;
+        let config = serde_json::to_string(&self.config).expect("JSON value is always valid");
         let detector_path = match self
             .connection
             .send(Method::POST, "/detections/", Body::from(config))

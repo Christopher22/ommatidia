@@ -45,6 +45,13 @@ impl Engines {
             .find(|engine| engine.config.name == name)
             .cloned()
     }
+
+    pub fn get_default(&self) -> Option<Engine> {
+        if self.0.len() == 1 {
+            return Some(self.0[0].clone());
+        }
+        self.get(Engines::DEFAULT_NAME)
+    }
 }
 
 impl TryFrom<Vec<Engine>> for Engines {

@@ -15,6 +15,7 @@ serde_json = "1.0"
 async-broadcast = "0.4"
 bytes = "*"
 glob = "0.3"
+futures = "*"
 
 [dev-dependencies]
 tempfile = "3.1"

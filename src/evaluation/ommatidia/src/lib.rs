@@ -1,5 +1,5 @@
 mod connection;
-mod detector;
+pub mod detector;
 pub mod engine;
 mod errors;
 mod estimate;
