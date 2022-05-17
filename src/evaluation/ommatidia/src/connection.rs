@@ -15,10 +15,22 @@ use super::engine::Engine;
 #[derive(Debug)]
 pub struct Connection(SendRequest<Body>, JoinHandle<()>);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Error {
     Transmission,
     Http,
 }
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Error::Transmission => "error during transmission of data",
+            Error::Http => "error during processing of HTTP data",
+        })
+    }
+}
+
+impl std::error::Error for Error {}
 
 impl Connection {
     pub async fn new(engine: &Engine, port: u16) -> Result<Self, Error> {

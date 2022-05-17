@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use crate::Estimate;
 
+#[derive(Debug, PartialEq)]
 pub struct Detection {
     identifier: Rc<String>,
     estimate: Result<Estimate, String>,

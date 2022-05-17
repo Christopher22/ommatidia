@@ -7,6 +7,15 @@ pub enum Entry {
     Pattern(Paths),
 }
 
+impl std::fmt::Debug for Entry {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Path(path) => f.debug_tuple("Path").field(path).finish(),
+            Self::Pattern(_) => f.debug_tuple("Pattern").finish(),
+        }
+    }
+}
+
 impl From<PathBuf> for Entry {
     fn from(path: PathBuf) -> Self {
         Entry::Path(path)

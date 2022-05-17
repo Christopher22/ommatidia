@@ -30,6 +30,7 @@ impl<E: std::error::Error> Errors<E> {
     }
 }
 
+#[derive(Debug)]
 pub struct ErrorWithId<'a, 'b, T: std::error::Error> {
     errors: &'a mut Errors<T>,
     name: Cow<'b, str>,
