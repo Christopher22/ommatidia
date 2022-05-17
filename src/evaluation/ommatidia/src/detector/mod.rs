@@ -1,10 +1,11 @@
 mod config;
+mod connection;
 mod creation_error;
 mod detection;
 mod detection_error;
 mod detectors;
 
-use std::{collections::HashMap, io::Read};
+use std::{collections::HashMap, io::Read, rc::Rc};
 
 use bollard::{
     container::{
@@ -18,16 +19,17 @@ use hyper::{Body, Method, StatusCode};
 
 pub use self::{
     config::Config,
+    connection::Connection,
     creation_error::CreationError,
     detection::Detection,
     detection_error::DetectionError,
     detectors::{Detectors, Error as DetectorError},
 };
-use super::{connection::Connection, engine::Engine, estimate::Estimate, files::Samples, MetaData};
+use super::{engine::Engine, estimate::Estimate, files::Samples, MetaData};
 
 #[derive(Debug)]
 pub struct Detector {
-    name: String,
+    name: Rc<String>,
     connection: Connection,
     pub meta_data: MetaData,
     engine: Engine,
@@ -36,12 +38,12 @@ pub struct Detector {
 
 impl Detector {
     pub async fn spawn<T: AsRef<str>>(
+        name: String,
         engine: Engine,
         image_name: T,
         config: serde_json::Value,
     ) -> Result<Detector, CreationError> {
         const TARGET_PORT: &str = "8080/tcp";
-        let name = uuid::Uuid::new_v4().to_string();
         let port = engine.get_free_port();
 
         // Create the container...
@@ -87,7 +89,7 @@ impl Detector {
             .map_err(|error| CreationError::CreationFailed(error.to_string()))?;
 
         // ... connect to the algorithm running there, ...
-        let mut connection = Connection::new(&engine, port)
+        let mut connection = connection::Connection::new(&engine, port)
             .await
             .or(Err(CreationError::ConnectionFailed))?;
 
@@ -97,7 +99,7 @@ impl Detector {
             .map_err(CreationError::ImageInvalid)?;
 
         Ok(Detector {
-            name,
+            name: Rc::new(name),
             connection,
             meta_data,
             engine,
@@ -150,7 +152,7 @@ impl Detector {
                     Ok((StatusCode::OK, response)) => {
                         let estimate: Estimate = serde_json::from_reader(response)
                             .or(Err(DetectionError::EstimationInvalid))?;
-                        Detection::ok(sample.identifier, estimate)
+                        Detection::ok(sample.identifier, self.name.clone(), estimate)
                     }
                     Ok((StatusCode::BAD_REQUEST, mut response_stream)) => {
                         let mut failure_message = String::with_capacity(16);
@@ -161,7 +163,7 @@ impl Detector {
                                     ERROR_MESSAGE_NO_UTF8.into(),
                                 )
                             })?;
-                        Detection::failed(sample.identifier, failure_message)
+                        Detection::failed(sample.identifier, self.name.clone(), failure_message)
                     }
                     Ok((unexpected_status, _)) => {
                         return Err(DetectionError::EstimationResponseUnexpected(format!(

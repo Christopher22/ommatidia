@@ -3,7 +3,7 @@ use std::io::Read;
 use hyper::{Body, Method, StatusCode};
 use serde::{Deserialize, Serialize};
 
-use super::connection::Connection;
+use super::detector::Connection;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum OutputType {

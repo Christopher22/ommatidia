@@ -45,13 +45,14 @@ impl Detectors {
                 let engine = match detector_config.engine {
                     Some(engine) => engines
                         .get(&engine)
-                        .ok_or(Error::UnknownEngine(detector_config.name, engine)),
+                        .ok_or_else(|| Error::UnknownEngine(detector_config.name.clone(), engine)),
                     None => engines
                         .get_default()
-                        .ok_or(Error::AmbiguesEngine(detector_config.name)),
+                        .ok_or_else(|| Error::AmbiguesEngine(detector_config.name.clone())),
                 }?;
 
                 Ok(Detector::spawn(
+                    detector_config.name,
                     engine,
                     detector_config.image,
                     detector_config.config,
