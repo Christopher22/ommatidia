@@ -8,18 +8,20 @@
     unused_qualifications
 )]
 
+mod dataset;
 pub mod detector;
 pub mod engine;
-mod errors;
 mod estimate;
-mod files;
 mod meta_data;
 mod util;
 
-pub use self::errors::{ErrorWithId, Errors};
+pub use self::dataset::{Dataset, Entry, ErrorType as FileError, Sample, Samples};
 pub use self::estimate::{Ellipse, Estimate, Point, Position, Radian};
-pub use self::files::{Entry, Error as FileError, Files, Sample, Samples};
 pub use self::meta_data::{Error as MetaDataLoadingError, MetaData, OutputType, Training};
 
 // Re-export for convenient usage
 pub use serde as serialization;
+
+pub trait ErrorHandler {
+    fn handle<E: std::error::Error>(&self, error: E);
+}

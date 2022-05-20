@@ -1,9 +1,9 @@
 mod config;
 mod connection;
-mod creation_error;
 mod detection;
 mod detection_error;
 mod detectors;
+mod error;
 
 use std::{collections::HashMap, io::Read, rc::Rc};
 
@@ -20,12 +20,12 @@ use hyper::{Body, Method, StatusCode};
 pub use self::{
     config::Config,
     connection::Connection,
-    creation_error::CreationError,
     detection::Detection,
     detection_error::DetectionError,
-    detectors::{Detectors, Error as DetectorError},
+    detectors::Detectors,
+    error::{Error, ErrorType},
 };
-use super::{engine::Engine, estimate::Estimate, files::Samples, MetaData};
+use super::{dataset::Samples, engine::Engine, estimate::Estimate, MetaData};
 
 #[derive(Debug)]
 pub struct Detector {
@@ -42,7 +42,7 @@ impl Detector {
         engine: Engine,
         image_name: T,
         config: serde_json::Value,
-    ) -> Result<Detector, CreationError> {
+    ) -> Result<Detector, Error> {
         const TARGET_PORT: &str = "8080/tcp";
         let port = engine.get_free_port();
 
@@ -77,8 +77,14 @@ impl Detector {
                 BollardError::DockerResponseServerError {
                     status_code: 404,
                     message: _,
-                } => CreationError::ImageUnknown(image_name.as_ref().to_string()),
-                error => CreationError::CreationFailed(error.to_string()),
+                } => Error {
+                    detector: name.clone(),
+                    details: ErrorType::ImageUnknown(image_name.as_ref().to_string()),
+                },
+                error => Error {
+                    detector: name.clone(),
+                    details: ErrorType::CreationFailed(error.to_string()),
+                },
             })?;
 
         // .. start it, ...
@@ -86,17 +92,26 @@ impl Detector {
             .as_ref()
             .start_container(name.as_str(), None::<StartContainerOptions<&str>>)
             .await
-            .map_err(|error| CreationError::CreationFailed(error.to_string()))?;
+            .map_err(|error| Error {
+                detector: name.clone(),
+                details: ErrorType::CreationFailed(error.to_string()),
+            })?;
 
         // ... connect to the algorithm running there, ...
         let mut connection = connection::Connection::new(&engine, port)
             .await
-            .or(Err(CreationError::ConnectionFailed))?;
+            .map_err(|_| Error {
+                detector: name.clone(),
+                details: ErrorType::ConnectionFailed,
+            })?;
 
         // ... and parse the meta data.
         let meta_data = MetaData::from_container(&mut connection)
             .await
-            .map_err(CreationError::ImageInvalid)?;
+            .map_err(|error| Error {
+                detector: name.clone(),
+                details: ErrorType::ImageInvalid(error),
+            })?;
 
         Ok(Detector {
             name: Rc::new(name),

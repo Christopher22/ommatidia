@@ -1,35 +1,4 @@
-use super::{Engine, Error as EngineError};
-
-#[derive(Debug)]
-pub enum Error {
-    DefaultEngineFailed(EngineError),
-    DuplicatedName(String),
-    DuplicatedHost(String),
-}
-
-impl std::fmt::Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Error::DefaultEngineFailed(error) => write!(
-                f,
-                "connecting to the local Docker instance (as default given missing explicit specification) failed: {}",
-                error
-            ),
-            Error::DuplicatedName(name) => {
-                write!(f, "two Docker hosts share the same name '{}'", name)
-            }
-            Error::DuplicatedHost(name) => {
-                write!(
-                    f,
-                    "two Docker hosts share the same remote host specification '{}'",
-                    name
-                )
-            }
-        }
-    }
-}
-
-impl std::error::Error for Error {}
+use super::{Engine, Error};
 
 #[derive(Debug, Clone, serde::Deserialize)]
 #[serde(try_from = "Vec<Engine>")]
@@ -62,7 +31,7 @@ impl TryFrom<Vec<Engine>> for Engines {
         if engines.is_empty() {
             return Engine::local(Engines::DEFAULT_NAME)
                 .map(|engine| Engines(vec![engine]))
-                .map_err(Error::DefaultEngineFailed);
+                .map_err(Error::from);
         }
 
         // Check for same name

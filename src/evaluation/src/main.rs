@@ -1,14 +1,37 @@
-use ommatidia::{Detector, Engine, RemoteConfig};
+use std::io::Read;
+
+mod config;
+
+fn load_config() -> Result<config::Config, String> {
+    let mut input = std::io::stdin();
+    let mut toml_content = String::default();
+    input
+        .read_to_string(&mut toml_content)
+        .map_err(|error| format!("Unable to read TOML input: {}", error))?;
+    toml::from_str(toml_content.as_str())
+        .map_err(|error| format!("Unable to parse configuration: {}", error))
+}
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
-    let docker: Engine = RemoteConfig::default()
-        .try_into()
-        .expect("Unable to access Docker");
+    let config = match load_config() {
+        Ok(config) => config,
+        Err(error) => {
+            eprintln!("{}", error);
+            return;
+        }
+    };
 
-    let detector = Detector::spawn(docker, "pure:0.1")
-        .await
-        .expect("Unable to spawn container");
+    let config = match config.try_spawn().await {
+        Ok(config) => config,
+        Err(error) => {
+            eprintln!("Unable to create detectors: {}", error);
+            return;
+        }
+    };
 
-    detector.stop().await;
+    /*for source in config.files {
+        config.detectors.
+        source.
+    }*/
 }

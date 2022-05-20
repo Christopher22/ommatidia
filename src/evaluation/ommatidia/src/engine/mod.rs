@@ -1,15 +1,17 @@
 mod config;
 mod engines;
+mod error;
 mod readable_file_path;
 mod remote_config;
 
 use std::rc::Rc;
 
-use bollard::{errors::Error, Docker};
+use bollard::Docker;
 
 pub use self::{
     config::Config,
-    engines::{Engines, Error as EnginesError},
+    engines::Engines,
+    error::Error,
     readable_file_path::ReadableFilePath,
     remote_config::{RemoteConfig, SslConfig},
 };
@@ -25,7 +27,8 @@ impl Engine {
     const CONNECTION_TIMEOUT_SECONDS: u64 = 16;
 
     pub fn local<T: AsRef<str>>(name: T) -> Result<Engine, Error> {
-        let docker = Docker::connect_with_local_defaults()?;
+        let docker = Docker::connect_with_local_defaults()
+            .map_err(|error| Error::ConnectionFailed(Some(name.as_ref().to_owned()), error))?;
         Ok(Engine {
             backend: docker.into(),
             config: Rc::new(Config {
