@@ -16,7 +16,7 @@ mod meta_data;
 mod util;
 
 pub use self::dataset::{Dataset, Entry, ErrorType as FileError, Sample, Samples};
-pub use self::estimate::{Ellipse, Estimate, Point, Position, Radian};
+pub use self::estimate::{Ellipse, Estimate, Estimates, Point, Position, Radian};
 pub use self::meta_data::{Error as MetaDataLoadingError, MetaData, OutputType, Training};
 
 // Re-export for convenient usage

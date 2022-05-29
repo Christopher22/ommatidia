@@ -1,4 +1,8 @@
+mod estimates;
+
 use serde::{self, Deserialize, Serialize};
+
+pub use self::estimates::Estimates;
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 #[serde(tag = "type")]
