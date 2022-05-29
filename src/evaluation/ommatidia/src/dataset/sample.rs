@@ -1,12 +1,14 @@
-use std::{path::Path, rc::Rc};
+use std::path::Path;
 
 use bytes::Bytes;
 use tokio::{fs::File, io::AsyncReadExt};
 
+use super::Identifier;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Sample {
     pub content: Bytes,
-    pub identifier: Rc<String>,
+    pub identifier: Identifier,
 }
 
 impl Sample {
@@ -23,24 +25,8 @@ impl Sample {
 
         Ok(Self {
             content: Bytes::from(data),
-            identifier: Rc::new(Self::create_identifier(name, path)),
+            identifier: Identifier::from_path(name, path),
         })
-    }
-
-    pub fn create_identifier<S: AsRef<str>, P: AsRef<Path>>(name: S, path: P) -> String {
-        format!("{}:{}", name.as_ref(), path.as_ref().display())
-    }
-}
-
-impl std::fmt::Display for Sample {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.identifier.as_str())
-    }
-}
-
-impl AsRef<str> for Sample {
-    fn as_ref(&self) -> &str {
-        &self.identifier
     }
 }
 
@@ -58,14 +44,9 @@ impl From<Sample> for Bytes {
 
 #[cfg(test)]
 mod tests {
-    use super::Sample;
-    use std::{io::Write, path::PathBuf};
+    use std::io::Write;
 
-    #[test]
-    fn test_identifier() {
-        let identifier = Sample::create_identifier("test", PathBuf::from("/dir/file"));
-        assert_eq!(identifier, "test:/dir/file");
-    }
+    use super::Sample;
 
     #[tokio::test]
     async fn test_loading() {

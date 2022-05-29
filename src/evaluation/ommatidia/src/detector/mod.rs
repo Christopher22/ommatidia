@@ -169,7 +169,11 @@ impl Detector {
                     Ok((StatusCode::OK, response)) => {
                         let estimate: Estimate = serde_json::from_reader(response)
                             .or(Err(DetectionError::EstimationInvalid))?;
-                        Detection::ok(sample.identifier, self.name.clone(), estimate)
+                        Detection {
+                            sample: sample.identifier,
+                            detector: self.name.clone(),
+                            estimate: Ok(estimate),
+                        }
                     }
                     Ok((StatusCode::BAD_REQUEST, mut response_stream)) => {
                         let mut failure_message = String::with_capacity(16);
@@ -180,7 +184,11 @@ impl Detector {
                                     ERROR_MESSAGE_NO_UTF8.into(),
                                 )
                             })?;
-                        Detection::failed(sample.identifier, self.name.clone(), failure_message)
+                        Detection {
+                            sample: sample.identifier,
+                            detector: self.name.clone(),
+                            estimate: Err(failure_message),
+                        }
                     }
                     Ok((unexpected_status, _)) => {
                         return Err(DetectionError::EstimationResponseUnexpected(format!(

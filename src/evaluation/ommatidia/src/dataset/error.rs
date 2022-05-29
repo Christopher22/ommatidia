@@ -1,3 +1,5 @@
+use super::Identifier;
+
 #[derive(Debug)]
 pub struct Error {
     pub dataset: String,
@@ -6,7 +8,7 @@ pub struct Error {
 
 #[derive(Debug)]
 pub enum ErrorType {
-    Io(String, std::io::Error),
+    Io(Identifier, std::io::Error),
     PatternInvalid(glob::PatternError),
     GlobIo(glob::GlobError),
     Aborted,

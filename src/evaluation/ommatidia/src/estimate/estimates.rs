@@ -103,6 +103,7 @@ mod tests {
 
     use super::Estimates;
     use crate::{
+        dataset::Identifier,
         detector::{Detection, Name},
         ErrorHandler, Point,
     };
@@ -125,27 +126,27 @@ mod tests {
     fn generate_data() -> Estimates<'static, IgnoreError> {
         let detector_name = Name::try_from("detector").expect("valid name");
         let example_data = vec![Ok(vec![
-            Detection::ok(
-                String::from("identifier1"),
-                detector_name.clone(),
-                crate::Estimate::Point(Point {
+            Detection {
+                sample: Identifier::from("identifier1"),
+                detector: detector_name.clone(),
+                estimate: Ok(crate::Estimate::Point(Point {
                     pos: crate::Position { x: 1, y: 2 },
                     confidence: Some(1.0),
-                }),
-            ),
-            Detection::failed(
-                String::from("identifier2"),
-                detector_name.clone(),
-                String::from("An error"),
-            ),
-            Detection::ok(
-                String::from("identifier3"),
-                detector_name,
-                crate::Estimate::Point(Point {
+                })),
+            },
+            Detection {
+                sample: Identifier::from("identifier2"),
+                detector: detector_name.clone(),
+                estimate: Err(String::from("An error")),
+            },
+            Detection {
+                sample: Identifier::from("identifier3"),
+                detector: detector_name,
+                estimate: Ok(crate::Estimate::Point(Point {
                     pos: crate::Position { x: 1, y: 2 },
                     confidence: Some(0.7),
-                }),
-            ),
+                })),
+            },
         ])];
 
         Estimates::new(example_data, IGNORE_ERROR)
@@ -160,7 +161,7 @@ mod tests {
     #[test]
     fn test_values() {
         let mut estimates = generate_data();
-        assert!(estimates.any(|detection| detection.identifier.as_str() == "identifier3"));
+        assert!(estimates.any(|detection| detection.sample.as_ref() == "identifier3"));
     }
 
     #[test]

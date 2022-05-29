@@ -1,5 +1,6 @@
 mod entry;
 mod error;
+mod identifier;
 mod sample;
 
 use std::path::PathBuf;
@@ -9,6 +10,7 @@ use crate::ErrorHandler;
 pub use self::{
     entry::Entry,
     error::{Error, ErrorType},
+    identifier::Identifier,
     sample::Sample,
 };
 
@@ -87,7 +89,7 @@ impl Dataset {
             }
             Err(error) => error_handler.handle(Error {
                 dataset: self.name.clone(),
-                details: ErrorType::Io(Sample::create_identifier(&self.name, path), error),
+                details: ErrorType::Io(Identifier::from_path(&self.name, path), error),
             }),
         };
         return true;
