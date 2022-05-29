@@ -73,6 +73,7 @@ impl Dataset {
         }
     }
 
+    #[allow(clippy::needless_return)]
     async fn load_sample<E: ErrorHandler>(&self, path: PathBuf, error_handler: &E) -> bool {
         match Sample::from_path(&self.name, &path).await {
             Ok(sample) => {
