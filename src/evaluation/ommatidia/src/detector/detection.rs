@@ -1,26 +1,30 @@
 use std::rc::Rc;
 
-use crate::Estimate;
+use crate::{detector::Name, Estimate};
 
 #[derive(Debug, PartialEq)]
 pub struct Detection {
     identifier: Rc<String>,
-    detector: Rc<String>,
+    detector: Name,
     estimate: Result<Estimate, String>,
 }
 
 impl Detection {
-    pub fn ok(identifier: Rc<String>, detector: Rc<String>, estimate: Estimate) -> Self {
+    pub fn ok<S: Into<Rc<String>>>(identifier: S, detector: Name, estimate: Estimate) -> Self {
         Detection {
-            identifier,
+            identifier: identifier.into(),
             detector,
             estimate: Ok(estimate),
         }
     }
 
-    pub fn failed(identifier: Rc<String>, detector: Rc<String>, failure_message: String) -> Self {
+    pub fn failed<S: Into<Rc<String>>>(
+        identifier: S,
+        detector: Name,
+        failure_message: String,
+    ) -> Self {
         Detection {
-            identifier,
+            identifier: identifier.into(),
             detector,
             estimate: Err(failure_message),
         }

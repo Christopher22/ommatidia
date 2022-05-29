@@ -1,8 +1,8 @@
-use crate::MetaDataLoadingError;
+use crate::{detector::Name, MetaDataLoadingError};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Error {
-    pub detector: String,
+    pub detector: Name,
     pub details: ErrorType,
 }
 
@@ -19,7 +19,7 @@ pub enum ErrorType {
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let detector = self.detector.as_str();
+        let detector = self.detector.as_ref();
         match &self.details {
             ErrorType::MultipleNames => {
                 write!(f, "at least two detector with name '{}' exists", detector)
@@ -29,7 +29,7 @@ impl std::fmt::Display for Error {
                 "an the engine '{}' for detector '{}' is not known",
                 engine, detector
             ),
-            ErrorType::AmbiguesEngine => write!(f, "unable to select a default engine for detector '{}' without explicit specification", self.detector.as_str()),
+            ErrorType::AmbiguesEngine => write!(f, "unable to select a default engine for detector '{}' without explicit specification", self.detector.as_ref()),
             ErrorType::ImageUnknown(image_name) => {
                 write!(f, "specified image '{}' for detector '{}' is invalid", image_name, detector)
             }

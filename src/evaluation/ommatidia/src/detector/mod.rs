@@ -4,8 +4,9 @@ mod detection;
 mod detection_error;
 mod detectors;
 mod error;
+mod name;
 
-use std::{collections::HashMap, io::Read, rc::Rc};
+use std::{collections::HashMap, io::Read};
 
 use bollard::{
     container::{
@@ -24,12 +25,13 @@ pub use self::{
     detection_error::DetectionError,
     detectors::Detectors,
     error::{Error, ErrorType},
+    name::{InvalidName, Name},
 };
 use super::{dataset::Samples, engine::Engine, estimate::Estimate, MetaData};
 
 #[derive(Debug)]
 pub struct Detector {
-    name: Rc<String>,
+    name: Name,
     connection: Connection,
     pub meta_data: MetaData,
     engine: Engine,
@@ -38,7 +40,7 @@ pub struct Detector {
 
 impl Detector {
     pub async fn spawn<T: AsRef<str>>(
-        name: String,
+        name: Name,
         engine: Engine,
         image_name: T,
         config: serde_json::Value,
@@ -51,7 +53,7 @@ impl Detector {
             .as_ref()
             .create_container(
                 Some(CreateContainerOptions {
-                    name: name.as_str(),
+                    name: name.as_ref(),
                 }),
                 ContainerConfig {
                     image: Some(image_name.as_ref()),
@@ -90,7 +92,7 @@ impl Detector {
         // .. start it, ...
         engine
             .as_ref()
-            .start_container(name.as_str(), None::<StartContainerOptions<&str>>)
+            .start_container(name.as_ref(), None::<StartContainerOptions<&str>>)
             .await
             .map_err(|error| Error {
                 detector: name.clone(),
@@ -114,7 +116,7 @@ impl Detector {
             })?;
 
         Ok(Detector {
-            name: Rc::new(name),
+            name,
             connection,
             meta_data,
             engine,
@@ -200,7 +202,7 @@ impl Detector {
         if self
             .engine
             .as_ref()
-            .stop_container(&self.name, Some(StopContainerOptions { t: 5 }))
+            .stop_container(self.name.as_ref(), Some(StopContainerOptions { t: 5 }))
             .await
             .is_err()
         {
@@ -210,7 +212,7 @@ impl Detector {
         self.engine
             .as_ref()
             .remove_container(
-                &self.name,
+                self.name.as_ref(),
                 Some(RemoveContainerOptions {
                     v: true,
                     force: true,

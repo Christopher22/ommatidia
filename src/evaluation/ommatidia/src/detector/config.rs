@@ -1,6 +1,8 @@
+use super::Name;
+
 #[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
 pub struct Config {
-    pub name: String,
+    pub name: Name,
     pub image: String,
     #[serde(default = "Config::default_config")]
     pub config: serde_json::Value,
@@ -16,7 +18,7 @@ impl Config {
 
 impl AsRef<str> for Config {
     fn as_ref(&self) -> &str {
-        &self.name
+        self.name.as_ref()
     }
 }
 

@@ -10,8 +10,8 @@ pub struct Detectors(Vec<Detector>);
 impl Detectors {
     pub async fn try_from(config: Vec<Config>, engines: &Engines) -> Result<Self, Error> {
         let config =
-            check_duplicates(config, |config| config.name.as_str()).map_err(|detector| Error {
-                detector,
+            check_duplicates(config, |config| &config.name).map_err(|detector_name| Error {
+                detector: detector_name,
                 details: ErrorType::MultipleNames,
             })?;
 
