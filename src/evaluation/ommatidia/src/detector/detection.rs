@@ -4,9 +4,9 @@ use crate::{detector::Name, Estimate};
 
 #[derive(Debug, PartialEq)]
 pub struct Detection {
-    identifier: Rc<String>,
-    detector: Name,
-    estimate: Result<Estimate, String>,
+    pub identifier: Rc<String>,
+    pub detector: Name,
+    pub estimate: Result<Estimate, String>,
 }
 
 impl Detection {
