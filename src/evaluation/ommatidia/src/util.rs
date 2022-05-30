@@ -1,3 +1,28 @@
+struct RawError<T: AsRef<str>>(pub T);
+
+impl<T: AsRef<str>> std::fmt::Debug for RawError<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("RawError").finish()
+    }
+}
+
+impl<T: AsRef<str>> std::fmt::Display for RawError<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.0.as_ref())
+    }
+}
+
+impl<T: AsRef<str>> std::error::Error for RawError<T> {}
+
+pub trait ErrorHandler {
+    fn handle<E: std::error::Error>(&self, error: E);
+
+    /// Report a raw error in the shape of plain text
+    fn handle_raw<E: AsRef<str>>(&self, error: E) {
+        self.handle(RawError(error))
+    }
+}
+
 pub fn check_duplicates<T, O: ?Sized + Ord + ToOwned, C: Fn(&T) -> &O>(
     mut config: Vec<T>,
     callback: C,

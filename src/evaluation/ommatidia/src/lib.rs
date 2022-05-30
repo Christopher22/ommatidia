@@ -18,10 +18,7 @@ mod util;
 pub use self::dataset::{Dataset, Entry, ErrorType as FileError, Sample, Samples};
 pub use self::estimate::{Ellipse, Estimate, Estimates, Point, Position, Radian};
 pub use self::meta_data::{Error as MetaDataLoadingError, MetaData, OutputType, Training};
+pub use self::util::ErrorHandler;
 
 // Re-export for convenient usage
 pub use serde as serialization;
-
-pub trait ErrorHandler {
-    fn handle<E: std::error::Error>(&self, error: E);
-}
