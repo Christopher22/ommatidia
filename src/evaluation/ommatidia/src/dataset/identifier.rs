@@ -34,6 +34,15 @@ impl<'a> From<&'a str> for Identifier {
     }
 }
 
+impl serde::Serialize for Identifier {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.0.as_str())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::path::PathBuf;
