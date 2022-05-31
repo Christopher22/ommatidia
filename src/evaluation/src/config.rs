@@ -9,7 +9,7 @@ use ommatidia::{
 pub struct Config<T = Vec<DetectorConfig>> {
     pub engines: Engines,
     pub detectors: T,
-    pub files: Vec<Dataset>,
+    pub datasets: Vec<Dataset>,
 }
 
 impl Config {
@@ -18,7 +18,7 @@ impl Config {
         Ok(Config {
             engines: self.engines,
             detectors,
-            files: self.files,
+            datasets: self.datasets,
         })
     }
 }

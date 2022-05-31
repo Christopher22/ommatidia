@@ -1,6 +1,9 @@
 use std::io::Read;
 
+use ommatidia::{ErrorHandler, Estimates};
+
 mod config;
+mod error_printer;
 
 fn load_config() -> Result<config::Config, String> {
     let mut input = std::io::stdin();
@@ -14,24 +17,30 @@ fn load_config() -> Result<config::Config, String> {
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
+    let error_handler = error_printer::ErrorPrinter::default();
     let config = match load_config() {
         Ok(config) => config,
         Err(error) => {
-            eprintln!("{}", error);
+            error_handler.handle_raw(format!("unable to load config from TOML: {}", error));
             return;
         }
     };
 
-    let config = match config.try_spawn().await {
+    let mut config = match config.try_spawn().await {
         Ok(config) => config,
         Err(error) => {
-            eprintln!("Unable to create detectors: {}", error);
+            error_handler.handle_raw(format!("unable to create detectors: {}", error));
             return;
         }
     };
 
-    /*for source in config.files {
-        config.detectors.
-        source.
-    }*/
+    // Print out all the estimates
+    let mut cache = Vec::with_capacity(32);
+    for dataset in config.datasets {
+        for estimate in Estimates::load(&mut config.detectors, dataset, &error_handler).await {
+            serde_json::to_writer(&mut cache, &estimate).expect("valid object");
+            println!("{}", std::str::from_utf8(&cache).expect("valid utf-8"));
+            cache.clear();
+        }
+    }
 }
