@@ -22,12 +22,14 @@ pub use self::{
     config::Config,
     connection::Connection,
     detection::Detection,
-    detection_error::DetectionError,
+    detection_error::{DetectionError, DetectionErrorType},
     detectors::Detectors,
     error::{Error, ErrorType},
     name::{InvalidName, Name},
 };
-use super::{dataset::Samples, engine::Engine, estimate::Estimate, MetaData};
+use super::{dataset::Samples, engine::Engine, MetaData};
+
+pub type FailableDetection = Result<Detection, DetectionError>;
 
 #[derive(Debug)]
 pub struct Detector {
@@ -124,7 +126,10 @@ impl Detector {
         })
     }
 
-    pub async fn detect(&mut self, mut samples: Samples) -> Result<Vec<Detection>, DetectionError> {
+    pub async fn detect(
+        &mut self,
+        mut samples: Samples,
+    ) -> Result<Vec<FailableDetection>, DetectionError> {
         const ERROR_MESSAGE_NO_UTF8: &str = "response is not valid UTF8";
 
         // Instantiate the detector and build the path it is accessible
@@ -134,27 +139,49 @@ impl Detector {
             .send(Method::POST, "/detections/", Body::from(config))
             .await
         {
+            // Everything seems fine
             Ok((StatusCode::OK, response)) => {
-                let detector_id: u32 = serde_json::from_reader(response).map_err(|error| {
-                    DetectionError::CreationResponseUnexpected(format!(
-                        "parsing error as JSON failed: {}",
-                        error
-                    ))
-                })?;
+                let detector_id: u32 =
+                    serde_json::from_reader(response).map_err(|error| DetectionError {
+                        detector: self.name.clone(),
+                        error_type: DetectionErrorType::CreationResponseUnexpected(format!(
+                            "parsing error as JSON failed: {}",
+                            error
+                        )),
+                    })?;
                 Ok(format!("/detections/{}/", detector_id))
             }
+            // There request was invalid - figure out why
             Ok((StatusCode::BAD_REQUEST, mut response_stream)) => {
                 let mut response = String::with_capacity(16);
-                response_stream.read_to_string(&mut response).map_err(|_| {
-                    DetectionError::CreationResponseUnexpected(ERROR_MESSAGE_NO_UTF8.into())
-                })?;
-                Err(DetectionError::ConfigRejected(response))
+                response_stream
+                    .read_to_string(&mut response)
+                    .map_err(|_| DetectionError {
+                        detector: self.name.clone(),
+                        error_type: DetectionErrorType::CreationResponseUnexpected(
+                            ERROR_MESSAGE_NO_UTF8.into(),
+                        ),
+                    })
+                    .and_then(|_| {
+                        Err(DetectionError {
+                            detector: self.name.clone(),
+                            error_type: DetectionErrorType::ConfigRejected(response),
+                        })
+                    })
             }
-            Ok((unexpected_status, _)) => Err(DetectionError::CreationResponseUnexpected(format!(
-                "response code '{}' unexpected",
-                unexpected_status
-            ))),
-            Err(error) => Err(error.into()),
+            // Some completely unexpected response came up
+            Ok((unexpected_status, _)) => Err(DetectionError {
+                detector: self.name.clone(),
+                error_type: DetectionErrorType::CreationResponseUnexpected(format!(
+                    "response code '{}' unexpected",
+                    unexpected_status
+                )),
+            }),
+            // The network failed
+            Err(error) => Err(DetectionError {
+                detector: self.name.clone(),
+                error_type: error.into(),
+            }),
         }?;
 
         // Apply the algorithm on all samples
@@ -166,39 +193,50 @@ impl Detector {
                     .send(Method::POST, &detector_path, sample.content.into())
                     .await
                 {
-                    Ok((StatusCode::OK, response)) => {
-                        let estimate: Estimate = serde_json::from_reader(response)
-                            .or(Err(DetectionError::EstimationInvalid))?;
-                        Detection {
-                            sample: sample.identifier,
+                    Ok((StatusCode::OK, response)) => serde_json::from_reader(response)
+                        .map(|estimate| Detection {
+                            sample: sample.identifier.clone(),
                             detector: self.name.clone(),
-                            estimate: Ok(estimate),
-                        }
-                    }
+                            estimate,
+                        })
+                        .map_err(|_| DetectionError {
+                            detector: self.name.clone(),
+                            error_type: DetectionErrorType::EstimationInvalid(
+                                sample.identifier.clone(),
+                            ),
+                        }),
                     Ok((StatusCode::BAD_REQUEST, mut response_stream)) => {
                         let mut failure_message = String::with_capacity(16);
                         response_stream
                             .read_to_string(&mut failure_message)
-                            .map_err(|_| {
-                                DetectionError::EstimationResponseUnexpected(
+                            .map_err(|_| DetectionError {
+                                detector: self.name.clone(),
+                                error_type: DetectionErrorType::EstimationResponseUnexpected(
+                                    sample.identifier.clone(),
                                     ERROR_MESSAGE_NO_UTF8.into(),
-                                )
-                            })?;
-                        Detection {
-                            sample: sample.identifier,
-                            detector: self.name.clone(),
-                            estimate: Err(failure_message),
-                        }
+                                ),
+                            })
+                            .and_then(|_| {
+                                Err(DetectionError {
+                                    detector: self.name.clone(),
+                                    error_type: DetectionErrorType::EstimationResponseUnexpected(
+                                        sample.identifier.clone(),
+                                        failure_message,
+                                    ),
+                                })
+                            })
                     }
-                    Ok((unexpected_status, _)) => {
-                        return Err(DetectionError::EstimationResponseUnexpected(format!(
-                            "response code '{}' unexpected",
-                            unexpected_status
-                        )));
-                    }
-                    Err(error) => {
-                        return Err(error.into());
-                    }
+                    Ok((unexpected_status, _)) => Err(DetectionError {
+                        detector: self.name.clone(),
+                        error_type: DetectionErrorType::EstimationResponseUnexpected(
+                            sample.identifier,
+                            format!("response code '{}' unexpected", unexpected_status),
+                        ),
+                    }),
+                    Err(error) => Err(DetectionError {
+                        detector: self.name.clone(),
+                        error_type: error.into(),
+                    }),
                 },
             );
         }

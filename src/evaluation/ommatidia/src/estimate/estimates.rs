@@ -1,21 +1,20 @@
 use crate::{
-    detector::{Detection, DetectionError, Detectors},
+    detector::{Detection, DetectionError, Detectors, FailableDetection},
     Dataset, ErrorHandler,
 };
 
-/// Collect the detections (= failable `Estimate`s) from different detectors.
+type EstimateCollection = Vec<Result<Vec<FailableDetection>, DetectionError>>;
+
+/// Collect the detections from different detectors.
 #[derive(Debug)]
 pub struct Estimates<'a, E: ErrorHandler> {
-    estimates: Vec<Result<Vec<Detection>, DetectionError>>,
-    current_estimator: Vec<Detection>,
+    estimates: EstimateCollection,
+    current_estimator: Vec<FailableDetection>,
     error_handler: &'a E,
 }
 
 impl<'a, E: ErrorHandler> Estimates<'a, E> {
-    fn new(
-        mut estimates: Vec<Result<Vec<Detection>, DetectionError>>,
-        error_handler: &'a E,
-    ) -> Self {
+    fn new(mut estimates: EstimateCollection, error_handler: &'a E) -> Self {
         while let Some(next_estimate) = estimates.pop() {
             match next_estimate {
                 Ok(current_estimate) => {
@@ -60,10 +59,16 @@ impl<'a, E: ErrorHandler> Iterator for Estimates<'a, E> {
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            if let Some(next_estimate) = self.current_estimator.pop() {
-                return Some(next_estimate);
+            match self.current_estimator.pop() {
+                Some(Ok(estimate)) => return Some(estimate),
+                Some(Err(error)) => {
+                    self.error_handler.handle(error);
+                    continue;
+                }
+                None => {}
             }
 
+            // If the are no values in the current collection try to get the new one
             match self.estimates.pop() {
                 Some(Ok(next_estimate)) => {
                     self.current_estimator = next_estimate;
@@ -91,11 +96,9 @@ impl<'a, E: ErrorHandler> Iterator for Estimates<'a, E> {
             .sum::<usize>()
             + self.current_estimator.len();
 
-        (remaining_elements, Some(remaining_elements))
+        (0, Some(remaining_elements))
     }
 }
-
-impl<'a, E: ErrorHandler> ExactSizeIterator for Estimates<'a, E> {}
 
 #[cfg(test)]
 mod tests {
@@ -104,7 +107,7 @@ mod tests {
     use super::Estimates;
     use crate::{
         dataset::Identifier,
-        detector::{Detection, Name},
+        detector::{Detection, DetectionError, DetectionErrorType, Name},
         ErrorHandler, Point,
     };
 
@@ -126,27 +129,29 @@ mod tests {
     fn generate_data() -> Estimates<'static, IgnoreError> {
         let detector_name = Name::try_from("detector").expect("valid name");
         let example_data = vec![Ok(vec![
-            Detection {
+            Ok(Detection {
                 sample: Identifier::from("identifier1"),
                 detector: detector_name.clone(),
-                estimate: Ok(crate::Estimate::Point(Point {
+                estimate: crate::Estimate::Point(Point {
                     pos: crate::Position { x: 1, y: 2 },
                     confidence: Some(1.0),
-                })),
-            },
-            Detection {
-                sample: Identifier::from("identifier2"),
+                }),
+            }),
+            Err(DetectionError {
                 detector: detector_name.clone(),
-                estimate: Err(String::from("An error")),
-            },
-            Detection {
+                error_type: DetectionErrorType::EstimationFailed(
+                    Identifier::from("identifier2"),
+                    String::from("A nasty error"),
+                ),
+            }),
+            Ok(Detection {
                 sample: Identifier::from("identifier3"),
                 detector: detector_name,
-                estimate: Ok(crate::Estimate::Point(Point {
+                estimate: crate::Estimate::Point(Point {
                     pos: crate::Position { x: 1, y: 2 },
                     confidence: Some(0.7),
-                })),
-            },
+                }),
+            }),
         ])];
 
         Estimates::new(example_data, IGNORE_ERROR)
@@ -155,7 +160,7 @@ mod tests {
     #[test]
     fn test_size_hint() {
         let estimates = generate_data();
-        assert_eq!(estimates.size_hint(), (3, Some(3)));
+        assert_eq!(estimates.size_hint(), (0, Some(3)));
     }
 
     #[test]
@@ -167,6 +172,6 @@ mod tests {
     #[test]
     fn test_number_of_values() {
         let estimates = generate_data();
-        assert_eq!(estimates.count(), 3);
+        assert_eq!(estimates.count(), 2);
     }
 }
