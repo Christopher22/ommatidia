@@ -12,13 +12,6 @@ pub enum OutputType {
     Mask,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum Training {
-    Unsupported,
-    Optional,
-    Required,
-}
-
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MetaData {
     name: String,
@@ -26,8 +19,6 @@ pub struct MetaData {
     authors: Vec<String>,
     license: String,
     prediction: OutputType,
-    training: Training,
-    supports_streaming: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
