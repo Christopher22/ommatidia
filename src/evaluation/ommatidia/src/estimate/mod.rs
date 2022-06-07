@@ -45,7 +45,7 @@ pub struct Ellipse {
     pub pos: Position,
     pub major: f32,
     pub minor: f32,
-    pub rotation: Radian,
+    pub angle: Radian,
     pub confidence: Option<f32>,
 }
 
@@ -55,7 +55,7 @@ mod tests {
 
     #[test]
     fn test_ellipse() {
-        const EXAMPLE: &str = r#"{ "type": "Ellipse", "x": 1, "y": 2, "major": 4, "minor": 3, "rotation": 0.5, "confidence": 0.1 }"#;
+        const EXAMPLE: &str = r#"{ "type": "Ellipse", "x": 1, "y": 2, "major": 4, "minor": 3, "angle": 0.5, "confidence": 0.1 }"#;
         let ellipse: Estimate = serde_json::from_str(EXAMPLE).expect("valid JSON");
 
         assert_eq!(
@@ -64,7 +64,7 @@ mod tests {
                 pos: Position { x: 1, y: 2 },
                 major: 4.0,
                 minor: 3.0,
-                rotation: Radian(0.5),
+                angle: Radian(0.5),
                 confidence: Some(0.1)
             })
         )
@@ -73,7 +73,7 @@ mod tests {
     #[test]
     fn test_ellipse_without_confidence() {
         const EXAMPLE: &str =
-            r#"{ "type": "Ellipse", "x": 1, "y": 2, "major": 4, "minor": 3, "rotation": 0.5}"#;
+            r#"{ "type": "Ellipse", "x": 1, "y": 2, "major": 4, "minor": 3, "angle": 0.5}"#;
         let ellipse: Estimate = serde_json::from_str(EXAMPLE).expect("valid JSON");
 
         assert_eq!(
@@ -82,7 +82,7 @@ mod tests {
                 pos: Position { x: 1, y: 2 },
                 major: 4.0,
                 minor: 3.0,
-                rotation: Radian(0.5),
+                angle: Radian(0.5),
                 confidence: None
             })
         )
