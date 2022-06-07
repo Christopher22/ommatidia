@@ -43,4 +43,9 @@ async fn main() {
             cache.clear();
         }
     }
+
+    // Print all error occuring during shutdown of detectors.
+    for shutdown_error in config.detectors.shutdown().await {
+        error_handler.handle(shutdown_error);
+    }
 }

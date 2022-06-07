@@ -1,5 +1,5 @@
 use crate::{
-    detector::{Config, Detector, Error, ErrorType},
+    detector::{Config, Detector, Error, ErrorType, ShutdownError},
     engine::Engines,
     util::check_duplicates,
 };
@@ -39,6 +39,14 @@ impl Detectors {
             .collect::<Result<futures::future::TryJoinAll<_>, _>>()?;
 
         engine_spawn_jobs.await.map(Detectors)
+    }
+
+    pub async fn shutdown(self) -> Vec<ShutdownError> {
+        futures::future::join_all(self.0.into_iter().map(|engine| engine.shutdown()))
+            .await
+            .into_iter()
+            .filter_map(|result| result.err())
+            .collect()
     }
 }
 

@@ -10,8 +10,8 @@ use std::{collections::HashMap, io::Read};
 
 use bollard::{
     container::{
-        Config as ContainerConfig, CreateContainerOptions, RemoveContainerOptions,
-        StartContainerOptions, StopContainerOptions,
+        Config as ContainerConfig, CreateContainerOptions, KillContainerOptions,
+        RemoveContainerOptions, StartContainerOptions,
     },
     errors::Error as BollardError,
     models::{HostConfig, PortBinding},
@@ -244,15 +244,20 @@ impl Detector {
         Ok(detections)
     }
 
-    pub async fn stop(self) -> bool {
-        if self
+    pub async fn shutdown(self) -> Result<(), ShutdownError> {
+        if let Err(error) = self
             .engine
             .as_ref()
-            .stop_container(self.name.as_ref(), Some(StopContainerOptions { t: 5 }))
+            .kill_container(
+                self.name.as_ref(),
+                Some(KillContainerOptions { signal: "SIGINT" }),
+            )
             .await
-            .is_err()
         {
-            return false;
+            return Err(ShutdownError {
+                detector: self.name,
+                error_message: error.to_string(),
+            });
         }
 
         self.engine
@@ -262,10 +267,31 @@ impl Detector {
                 Some(RemoveContainerOptions {
                     v: true,
                     force: true,
-                    link: true,
+                    link: false,
                 }),
             )
             .await
-            .is_err()
+            .map_err(|error| ShutdownError {
+                detector: self.name,
+                error_message: error.to_string(),
+            })
     }
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ShutdownError {
+    detector: Name,
+    error_message: String,
+}
+
+impl std::fmt::Display for ShutdownError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "unable to shut down pupil detection algorithm '{}': {}",
+            self.detector, self.error_message
+        )
+    }
+}
+
+impl std::error::Error for ShutdownError {}
