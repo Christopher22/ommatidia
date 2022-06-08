@@ -1,5 +1,5 @@
 FROM alpine:3.15.4
-LABEL version="0.2"
+LABEL version="0.3"
 LABEL description="Base image installing the ommatidia library and all required toolkits to build C++"
 
 COPY . /ommatidia/library

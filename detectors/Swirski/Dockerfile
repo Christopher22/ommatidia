@@ -1,4 +1,4 @@
-FROM ommatidia:0.2 AS builder
+FROM ommatidia:0.3 AS builder
 COPY . /ommatidia/executable
 RUN mkdir /ommatidia/executable/build \
     && cd /ommatidia/executable/build \
