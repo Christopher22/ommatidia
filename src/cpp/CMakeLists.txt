@@ -5,6 +5,8 @@ project(Ommatidia
     LANGUAGES CXX
 )
 
+set(ALLOW_COMMERCIAL_USE ON CACHE BOOL "Disable the parts of the code which should not be included in commercial products.")
+
 # Forbid in-source builds 
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
   message(
@@ -44,9 +46,14 @@ CPMAddPackage("gh:TheLartians/PackageProject.cmake@1.8.0")
 find_package(Crow REQUIRED)
 find_package(OpenCV REQUIRED COMPONENTS core)
 
-# Define the library
+# Define the library and filter those which are not compatible for commercial use if requested
 file(GLOB_RECURSE headers CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp")
 file(GLOB_RECURSE sources CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+if (ALLOW_COMMERCIAL_USE)
+  message(STATUS "Library compiled for allowed commercial use")
+  list(FILTER headers EXCLUDE REGEX ".*\/external\/.*")
+  list(FILTER sources EXCLUDE REGEX ".*\/external\/.*")
+endif()
 
 add_library(${PROJECT_NAME} STATIC ${headers} ${sources})
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
