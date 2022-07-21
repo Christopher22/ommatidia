@@ -1,0 +1,2 @@
+# Timm's (optimized) algorithm
+This folder contains the pupil detector optimized in [Boosting Speed- and Accuracy of Gradient based Dark Pupil Tracking using Vectorization and Differential Evolution. In 2019 Symposium on Eye Tracking Research and Applications](https://doi.org/10.1145/3314111.3319849) by A. Krause and K. Essig. The code were retrieved from https://github.com/afkrause/timms_algorithm at 08.07.2022 and modified accordingly.
