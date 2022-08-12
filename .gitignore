@@ -817,10 +817,7 @@ Cargo.lock
 
 .devcontainer
 .vscode
-detectors/*
-!detectors/ElSe
-!detectors/ExCuSe
-!detectors/Starburst
-!detectors/Swirski
-!detectors/PuRe
+detectors/__TODO
+detectors/__EXCLUDED
 local_data
+output
