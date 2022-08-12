@@ -1,0 +1,2 @@
+# CPRD
+This folder contains the CPRD pupil detector proposed in [Robust and accurate pupil detection for head-mounted eye tracking](https://doi.org/10.1145/2857491.2857505) by Z. Wan, C. Xiong, W. Chen, and H. Zhang. The code were retrieved from https://github.com/zhwan934940943/CPRD at 07.07.2022 and modified accordingly.
