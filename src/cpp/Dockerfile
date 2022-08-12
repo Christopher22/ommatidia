@@ -1,10 +1,10 @@
-FROM alpine:3.15.4
+FROM debian:bullseye-slim
 LABEL maintainer="christopher@gundler.de"
-LABEL version="0.4"
+LABEL version="0.5"
 LABEL description="Base image installing the ommatidia library and all required toolkits to build C++"
 
 ARG OPENCV_VERSION=4.6.0
-ARG CROW_VERSION=v1.0+4
+ARG CROW_VERSION=master
 ARG COMMERCIAL_USAGE_ALLOWED=OFF
 
 COPY ./include /ommatidia/library/include
@@ -14,7 +14,9 @@ COPY ./CMakeLists.txt /ommatidia/library/CMakeLists.txt
 WORKDIR /ommatidia
 
 # Install all the requirements for building C++ projects
-RUN apk add --no-cache alpine-sdk cmake ca-certificates wget boost-dev unzip
+RUN apt update && \
+    apt -y install --no-install-recommends ca-certificates wget cmake build-essential unzip git libasio-dev && \
+    apt clean && rm -rf /var/lib/apt/lists/*
 
 # Install OpenCV with the specific version
 RUN mkdir /ommatidia/dependencies && cd /ommatidia/dependencies \

@@ -41,7 +41,7 @@ void Server::Run(uint16_t port) { server_.port(port).multithreaded().run(); }
 
 crow::response Server::Run(crow::request request) {
   crow::response response;
-  server_.handle(request, response);
+  server_.handle_full(request, response);
   return response;
 }
 
