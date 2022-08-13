@@ -4,14 +4,15 @@ ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
 # Those envs could be used in the "child" files
 ENV PUPIL_DETECTOR_DIR=pupil_detector
-ENV MICROMAMBA_INSTALL='micromamba install -y -n base -f'
-ENV MICROMAMBA_CLEAR='micromamba clean --all --yes'
+ENV MICROMAMBA_INSTALL='micromamba install -y -n base -f '
+ENV MICROMAMBA_CLEAR='micromamba clean --all --yes '
 
 # Define dependencies always required
 ARG VERSION_PYTHON=3.7
-ARG VERSION_FASTAPI=0.78.0
 ARG VERSION_OPENCV=3.4
 ARG VERSION_NUMPY=1.19.2
+# Those are likely not influenced by the dependent image
+ARG VERSION_FASTAPI=0.78.0
 ARG VERSION_REQUESTS=2.25.1
 ARG VERSION_UVICORN=0.18.2
 
