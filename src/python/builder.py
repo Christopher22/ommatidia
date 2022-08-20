@@ -12,7 +12,7 @@ if __name__ == "__main__":
     # Parse the arguments from the header of the file
     versions = {}
     with open(args.file, mode="r", encoding="utf8") as file:
-        regex = re.compile(r"FROM\s+ommatidia-py(?<py>[0-9\.]+)-cv(?<cv>[0-9\.]+)-np(?<np>[0-9\.]+):(?<version>[0-9\.]+)")
+        regex = re.compile(r"FROM\s+ommatidia-py(?P<py>[0-9\.]+)-cv(?P<cv>[0-9\.]+)-np(?P<np>[0-9\.]+):(?P<version>[0-9\.]+)")
         required_versions = regex.match(file.read())
         version = required_versions.group("version")
         versions["VERSION_PYTHON"] = required_versions.group("py")
@@ -26,4 +26,4 @@ if __name__ == "__main__":
         arguments.append(f"{name}={version}")
     arguments.append(".")
 
-    run(arguments, stdout=STDOUT, stderr=STDOUT, check=False)
+    run(arguments, check=False)
