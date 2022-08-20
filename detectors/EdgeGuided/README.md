@@ -1,0 +1,2 @@
+# Edge-Guided Near-Eye Image Analysis for Head Mounted Displays
+This folder contains the pupil detector proposed in [Edge-Guided Near-Eye Image Analysis for Head Mounted Displays](https://ieeexplore.ieee.org/document/9583797) by Zhimin Wang, Yuxin Zhao, Yunfei Liu, and Feng Lu. The corresponding license apply!
