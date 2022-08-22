@@ -1,11 +1,13 @@
 from pathlib import Path
 import string
-from typing import Optional
+from typing import Optional, Union, Any
 import subprocess
 from contextlib import closing
 import socket
-from urllib.error import URLError
-from urllib.request import urlopen
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+from dataclasses import dataclass
+import json
 
 
 class InvalidContainerException(Exception):
@@ -15,15 +17,34 @@ class InvalidContainerException(Exception):
     """
 
 
+@dataclass
+class Response:
+    """
+    The response created from a request.
+    """
+
+    status: int
+    body: Optional[str]
+
+    @property
+    def json(self) -> Any:
+        if self.body is None:
+            raise ValueError("No body available")
+        return json.loads(self.body)
+
+
 class Container:
     """
     A container with included pupil detector.
     """
 
-    def __init__(self, name_and_tag: str):
+    def __init__(self, name_and_tag: str, show_output: bool = False):
         self.name_and_tag = name_and_tag
         self.port = Container._find_free_port()
+        self.entry_point = f"http://127.0.0.1:{self.port}"
         self._process = None
+        self._is_ready = False
+        self._show_output = show_output
 
     def __enter__(self) -> "Container":
         self._process = subprocess.Popen(
@@ -33,7 +54,9 @@ class Container:
                 "-p",
                 f"127.0.0.1:{self.port}:8080/tcp",
                 self.name_and_tag,
-            )
+            ),
+            stdout=subprocess.DEVNULL if not self._show_output else subprocess.PIPE,
+            stderr=subprocess.DEVNULL if not self._show_output else subprocess.PIPE,
         )
         return self
 
@@ -48,6 +71,8 @@ class Container:
 
         if self._process is None:
             raise ValueError("The process is not started")
+        if self._is_ready:
+            return True
 
         # Wait some time to allow start of the process
         try:
@@ -58,7 +83,8 @@ class Container:
             pass
 
         try:
-            with urlopen(self.entry_point):
+            with urlopen(f"{self.entry_point}/"):
+                self._is_ready = True
                 return True
         except URLError as error:
             # We are unable to connect
@@ -68,12 +94,38 @@ class Container:
                 f"The HTTP response of the detector appears corrupt: {error}"
             ) from error
 
-    @property
-    def entry_point(self) -> str:
+    def request(
+        self,
+        relative_url: str,
+        method: str = "GET",
+        body: Union[bytes, Any, None] = None,
+        content_type: Optional[str] = None,
+    ) -> Response:
         """
-        Calculate the entry point for this image.
+        Send a HTTP request to the detector.
         """
-        return f"http://127.0.0.1:{self.port}/"
+
+        if not self._is_ready and not self.is_ready(2):
+            raise ValueError("The container is not ready")
+
+        request = Request(url=f"{self.entry_point}{relative_url}", method=method)
+        if body is not None:
+            # Check if it is already serialized
+            if isinstance(body, bytes):
+                request.data = body
+            else:
+                request.data = json.dumps(body).encode("utf-8")
+
+            request.add_header(
+                "Content-Type",
+                "application/json" if content_type is None else content_type,
+            )
+
+        try:
+            with urlopen(request) as response:
+                return Response(200, response.read().decode("utf-8"))
+        except HTTPError as error:
+            return Response(error.code, None)
 
     @staticmethod
     def _find_free_port() -> int:
@@ -92,7 +144,9 @@ class Image:
     An Docker image of a pupil detector.
     """
 
-    def __init__(self, path: Path, name_and_tag: Optional[str] = None):
+    def __init__(
+        self, path: Path, name_and_tag: Optional[str] = None, show_output: bool = False
+    ):
         if not path.is_dir() or not (path / "Dockerfile").is_file():
             raise ValueError("The given path does not point to a detector")
         self.path = path
@@ -101,24 +155,26 @@ class Image:
             if name_and_tag is not None
             else Image._create_name_and_tag(path)
         )
+        self._show_output = show_output
 
     def __enter__(self) -> "Image":
         subprocess.run(
             ("docker", "build", "-t", self.name_and_tag, "."),
             cwd=self.path,
             check=True,
-            capture_output=False,
+            stdout=subprocess.DEVNULL if not self._show_output else subprocess.PIPE,
+            stderr=subprocess.DEVNULL if not self._show_output else subprocess.PIPE,
         )
         return self
 
     def __exit__(self, _type, _value, _tb):
         pass
 
-    def spawn(self) -> Container:
+    def spawn(self, show_output: bool = False) -> Container:
         """
         Prepare a container from this image.
         """
-        return Container(self.name_and_tag)
+        return Container(self.name_and_tag, show_output=show_output)
 
     @staticmethod
     def _create_name_and_tag(path: Path) -> str:
