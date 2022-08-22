@@ -3,9 +3,10 @@ import logging
 from pathlib import Path
 
 from .docker import Image
+from .test_runner import TestRunner
 
 
-def main():
+def main() -> int:
     """
     The main routine for the package.
     """
@@ -22,15 +23,28 @@ def main():
     )
     args = parser.parse_args()
 
-    logging.info("Building the image ...")
+    logging.info("Building the image at '%s'...", args.detector)
     with Image(Path(args.detector)) as image:
-        logging.info("Spawning the container ...")
+        logging.info("Spawning the container '%s' ...", image.name_and_tag)
         with image.spawn() as container:
+            # Start the detector
             while not container.is_ready(3):
-                logging.info("Container not ready")
-            logging.info("Detector online!")
-        logging.info("Container shut down")
+                logging.info("Waiting for detector not get ready ...")
+            logging.info("Detector sucessfully started")
+
+            # Run all the tests
+            test_runner = TestRunner(container)
+            logging.info("Found %d tests for the detector", len(test_runner))
+            for result in test_runner:
+                if not result:
+                    logging.warning(str(result))
+
+            if test_runner:
+                logging.info("All tests done without any error")
+                return 0
+            logging.info("Some tests failed")
+            return 1
 
 
 if __name__ == "__main__":
-    main()
+    exit(main())
