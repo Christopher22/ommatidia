@@ -9,8 +9,8 @@ class TestCreate(Test):
 
     def run(self, container: Container):
         response = container.request("/detections/", method="POST", body={})
-        assert response.status == 200
-        assert isinstance(response.json, int)
+        self.assert_equal(response.status, 200)
+        self.assert_isinstance(response.json, int)
 
 
 class TestGet(Test):
@@ -19,12 +19,12 @@ class TestGet(Test):
 
     def run(self, container: Container):
         response = container.request("/detections/", method="POST", body={})
-        assert response.status == 200
+        self.assert_equal(response.status, 200)
 
         detector_id = response.json
         response = container.request(f"/detections/{detector_id}/")
-        assert response.status == 200
-        assert isinstance(response.json, object)
+        self.assert_equal(response.status, 200)
+        self.assert_isinstance(response.json, object)
 
 
 class TestInvalidGet(Test):
@@ -33,7 +33,7 @@ class TestInvalidGet(Test):
 
     def run(self, container: Container):
         response = container.request("/detections/666")
-        assert response.status == 404
+        self.assert_equal(response.status, 404)
 
 
 class TestDetect(Test):
@@ -42,11 +42,8 @@ class TestDetect(Test):
 
     def run(self, container: Container):
         # Create detector
-        creation_response = container.request(
-            "/detections/",
-            method="POST",
-        )
-        assert creation_response.status == 200
+        creation_response = container.request("/detections/", method="POST", body={})
+        self.assert_equal(creation_response.status, 200, creation_response.body)
 
         # Send invalid data to the detector
         sample = importlib.resources.read_binary(res, "example.png")
@@ -58,10 +55,10 @@ class TestDetect(Test):
             content_type="image/png",
         )
 
-        assert response.status == 200
+        self.assert_equal(response.status, 200)
         response = response.json
-        assert isinstance(response["x"], int)
-        assert isinstance(response["y"], int)
+        self.assert_isinstance(response["x"], int)
+        self.assert_isinstance(response["y"], int)
 
 
 class TestDetectInvalid(Test):
@@ -70,11 +67,8 @@ class TestDetectInvalid(Test):
 
     def run(self, container: Container):
         # Create detector
-        creation_response = container.request(
-            "/detections/",
-            method="POST",
-        )
-        assert creation_response.status == 200
+        creation_response = container.request("/detections/", method="POST", body={})
+        self.assert_equal(creation_response.status, 200)
 
         # Send invalid data to the detector
         created_id = int(creation_response.json)
@@ -85,7 +79,7 @@ class TestDetectInvalid(Test):
             content_type="image/png",
         )
 
-        assert response.status == 400
+        self.assert_equal(response.status, 400)
 
 
 class TestDelete(Test):
@@ -95,20 +89,20 @@ class TestDelete(Test):
     def run(self, container: Container):
         # Create detector
         creation_response = container.request("/detections/", method="POST", body={})
-        assert creation_response.status == 200
+        self.assert_equal(creation_response.status, 200)
         created_id = int(creation_response.json)
 
         # Check it was created successfully
         response = container.request(f"/detections/{created_id}/")
-        assert response.status == 200
+        self.assert_equal(response.status, 200)
 
         # Check deleting works
         response = container.request(f"/detections/{created_id}/", method="DELETE")
-        assert response.status == 200
+        self.assert_equal(response.status, 200)
 
         # Check it does not exists any longer
         response = container.request(f"/detections/{created_id}/")
-        assert response.status == 404
+        self.assert_equal(response.status, 404)
 
 
 class TestQuery(Test):
@@ -117,23 +111,20 @@ class TestQuery(Test):
 
     def run(self, container: Container):
         # Create detector 1
-        creation_response = container.request("/detections/", method="POST")
-        assert creation_response.status == 200
-        created_id_1 = int(creation_response.json())
+        creation_response = container.request("/detections/", method="POST", body={})
+        self.assert_equal(creation_response.status, 200)
+        created_id_1 = int(creation_response.json)
 
         # Create detector 2
-        creation_response = container.request(
-            "/detections/",
-            method="POST",
-        )
-        assert creation_response.status == 200
-        created_id_2 = int(creation_response.json())
+        creation_response = container.request("/detections/", method="POST", body={})
+        self.assert_equal(creation_response.status, 200)
+        created_id_2 = int(creation_response.json)
 
         # Create response
         creation_response = container.request(
             "/detections/",
         )
-        assert creation_response.status == 200
+        self.assert_equal(creation_response.status, 200)
 
         # The old IDs may remain in the list. Check only for the two most recent ones
-        assert creation_response.json()[-2:] == [created_id_1, created_id_2]
+        self.assert_equal(creation_response.json[-2:], [created_id_1, created_id_2])

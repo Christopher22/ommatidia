@@ -8,12 +8,12 @@ class TestMetadata(Test):
     def run(self, detector: Container):
         response = detector.request("/")
         response_json = response.json
-        assert response.status == 200
-        assert "name" in response_json
-        assert "additional_information" in response_json
-        assert "authors" in response_json
-        assert "license" in response_json
-        assert "prediction" in response_json
+        self.assert_equal(response.status, 200)
+        self.assert_in("name", response_json)
+        self.assert_in("additional_information", response_json)
+        self.assert_in("authors", response_json)
+        self.assert_in("license", response_json)
+        self.assert_in("prediction", response_json)
 
 
 class TestConfig(Test):
@@ -22,4 +22,4 @@ class TestConfig(Test):
 
     def run(self, detector: Container):
         response = detector.request("/")
-        assert isinstance(response.json, object)
+        self.assert_isinstance(response.json, object)
