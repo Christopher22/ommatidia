@@ -24,12 +24,10 @@ class Response:
     """
 
     status: int
-    body: Optional[str]
+    body: str
 
     @property
     def json(self) -> Any:
-        if self.body is None:
-            raise ValueError("No body available")
         return json.loads(self.body)
 
 
@@ -125,7 +123,7 @@ class Container:
             with urlopen(request) as response:
                 return Response(200, response.read().decode("utf-8"))
         except HTTPError as error:
-            return Response(error.code, None)
+            return Response(error.code, error.read().decode("utf-8"))
 
     @staticmethod
     def _find_free_port() -> int:

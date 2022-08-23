@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+from http.client import RemoteDisconnected
 from typing import Optional, Iterable
+from urllib.error import URLError
 
 from .tests import Test
 from .tests.default import *
@@ -35,6 +37,13 @@ class TestRunner:
             except AssertionError as error:
                 self.is_successful = False
                 yield Result(test.name, str(error))
+            except URLError as error:
+                self.is_successful = False
+                yield Result(test.name, f"HTTP error: {error.reason}")
+            except RemoteDisconnected as error:
+                self.is_successful = False
+                yield Result(test.name, f"HTTP error: {error}")
+
             yield Result(test.name)
 
     def __len__(self) -> int:
