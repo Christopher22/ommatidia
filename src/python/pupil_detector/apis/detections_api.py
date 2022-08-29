@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from typing import List, Union
+from typing import List, Union, Optional
 
 from fastapi import (
     APIRouter,
@@ -14,7 +14,8 @@ import numpy as np
 
 from ..models.point import Point
 from ..models.ellipse import Ellipse
-from ..detector import Detector
+from ..models.mask import Mask
+from ..detector import Detector, Config
 
 router = APIRouter()
 
@@ -29,15 +30,13 @@ router = APIRouter()
     summary="Initialize a new pupil detection algorithm with specific configuration.",
     response_model_by_alias=True,
 )
-async def create_detector(
-    request: Request,
-) -> int:
+async def create_detector(request: Request, config: Optional[Config] = None) -> int:
     """
     Initialize a new pupil detection algorithm with specific configuration.
     """
     detectors = request.app.state.detectors
     detector_id = len(detectors)
-    detectors.append(Detector())
+    detectors.append(Detector(config if config is not None else Config()))
     return detector_id
 
 
@@ -113,7 +112,7 @@ async def detect(
         description="Identifier for the running instance of pupil detection algorithm.",
         ge=0,
     ),
-) -> Union[Point, Ellipse]:
+) -> Union[Point, Ellipse, Mask]:
     """
     Evaluate a given image with the configured pupil detection algorihm.
     """
