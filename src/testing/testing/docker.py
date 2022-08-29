@@ -1,3 +1,4 @@
+from http.client import RemoteDisconnected
 from pathlib import Path
 import string
 from typing import Optional, Union, Any
@@ -45,6 +46,7 @@ class Container:
         self._show_output = show_output
 
     def __enter__(self) -> "Container":
+        output_target = subprocess.DEVNULL if not self._show_output else None
         self._process = subprocess.Popen(
             (
                 "docker",
@@ -53,8 +55,8 @@ class Container:
                 f"127.0.0.1:{self.port}:8080/tcp",
                 self.name_and_tag,
             ),
-            stdout=subprocess.DEVNULL if not self._show_output else subprocess.PIPE,
-            stderr=subprocess.DEVNULL if not self._show_output else subprocess.PIPE,
+            stdout=output_target,
+            stderr=output_target,
         )
         return self
 
@@ -91,6 +93,8 @@ class Container:
             raise InvalidContainerException(
                 f"The HTTP response of the detector appears corrupt: {error}"
             ) from error
+        except RemoteDisconnected:
+            return False
 
     def request(
         self,
@@ -156,13 +160,17 @@ class Image:
         self._show_output = show_output
 
     def __enter__(self) -> "Image":
-        subprocess.run(
-            ("docker", "build", "-t", self.name_and_tag, "."),
-            cwd=self.path,
-            check=True,
-            stdout=subprocess.DEVNULL if not self._show_output else subprocess.PIPE,
-            stderr=subprocess.DEVNULL if not self._show_output else subprocess.PIPE,
-        )
+        output_target = subprocess.DEVNULL if not self._show_output else None
+        try:
+            subprocess.run(
+                ("docker", "build", "-t", self.name_and_tag, "."),
+                cwd=self.path,
+                check=True,
+                stdout=output_target,
+                stderr=output_target,
+            )
+        except subprocess.CalledProcessError as ex:
+            raise InvalidContainerException("The building of the image failed") from ex
         return self
 
     def __exit__(self, _type, _value, _tb):

@@ -9,7 +9,7 @@ class TestCreate(Test):
 
     def run(self, container: Container):
         response = container.request("/detections/", method="POST", body={})
-        self.assert_equal(response.status, 200)
+        self.assert_equal(response.status, 200, response.body)
         self.assert_isinstance(response.json, int)
 
 
@@ -19,7 +19,7 @@ class TestGet(Test):
 
     def run(self, container: Container):
         response = container.request("/detections/", method="POST", body={})
-        self.assert_equal(response.status, 200)
+        self.assert_equal(response.status, 200, response.body)
 
         detector_id = response.json
         response = container.request(f"/detections/{detector_id}/")
@@ -57,8 +57,8 @@ class TestDetect(Test):
 
         self.assert_equal(response.status, 200)
         response = response.json
-        self.assert_isinstance(response["x"], int)
-        self.assert_isinstance(response["y"], int)
+        self.assert_isinstance(response["x"], (float, int))
+        self.assert_isinstance(response["y"], (float, int))
 
 
 class TestDetectInvalid(Test):
@@ -68,7 +68,7 @@ class TestDetectInvalid(Test):
     def run(self, container: Container):
         # Create detector
         creation_response = container.request("/detections/", method="POST", body={})
-        self.assert_equal(creation_response.status, 200)
+        self.assert_equal(creation_response.status, 200, creation_response.body)
 
         # Send invalid data to the detector
         created_id = int(creation_response.json)
@@ -89,7 +89,7 @@ class TestDelete(Test):
     def run(self, container: Container):
         # Create detector
         creation_response = container.request("/detections/", method="POST", body={})
-        self.assert_equal(creation_response.status, 200)
+        self.assert_equal(creation_response.status, 200, creation_response.body)
         created_id = int(creation_response.json)
 
         # Check it was created successfully
@@ -112,7 +112,7 @@ class TestQuery(Test):
     def run(self, container: Container):
         # Create detector 1
         creation_response = container.request("/detections/", method="POST", body={})
-        self.assert_equal(creation_response.status, 200)
+        self.assert_equal(creation_response.status, 200, creation_response.body)
         created_id_1 = int(creation_response.json)
 
         # Create detector 2
