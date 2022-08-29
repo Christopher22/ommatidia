@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from typing import List
+from typing import List, Union
 
 from fastapi import (
     APIRouter,
@@ -13,6 +13,7 @@ import cv2 as cv
 import numpy as np
 
 from ..models.point import Point
+from ..models.ellipse import Ellipse
 from ..detector import Detector
 
 router = APIRouter()
@@ -112,7 +113,7 @@ async def detect(
         description="Identifier for the running instance of pupil detection algorithm.",
         ge=0,
     ),
-) -> Point:
+) -> Union[Point, Ellipse]:
     """
     Evaluate a given image with the configured pupil detection algorihm.
     """
@@ -127,11 +128,7 @@ async def detect(
     if image is None:
         raise HTTPException(status_code=400, detail="The provided sample is not valid")
 
-    coords = detector.detect(image)
-    return Point(
-        x=coords[0] / max(image.shape),
-        y=coords[1] / max(image.shape),
-    )
+    return detector.detect(image)
 
 
 @router.get(
