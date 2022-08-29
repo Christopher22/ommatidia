@@ -87,11 +87,11 @@ class Detector(AbstractDetector):
 
         return Ellipse(
             type="Ellipse",
-            x=int(pupil_ellipse[0]),
-            y=int(pupil_ellipse[1]),
-            major=int(pupil_ellipse[2]),
-            minor=int(pupil_ellipse[3]),
-            rotation=pupil_ellipse[4],
+            x=pupil_ellipse[0],
+            y=pupil_ellipse[1],
+            major=pupil_ellipse[2],
+            minor=pupil_ellipse[3],
+            rotation=pupil_ellipse[4]
         )
 
     @classmethod

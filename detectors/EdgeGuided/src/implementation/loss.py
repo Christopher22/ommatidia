@@ -47,6 +47,10 @@ def get_seg2ptLoss(op, gtPts, temperature=1):
     ypos = torch.sum(wtMap * yloc, -1, keepdim=True)
     predPts = torch.stack([xpos, ypos], dim=1).squeeze()
 
+    # The code does not run - avoid any missmatch
+    if len(predPts.shape) == 1:
+        predPts = predPts[None]
+        
     loss = F.l1_loss(predPts, gtPts, reduction="none")
     return loss, predPts
 

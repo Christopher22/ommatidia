@@ -121,7 +121,7 @@ def preprocess_frame(img, op_shape, align_width=True):
                 # Vertically chop array off
                 pad_width = op_shape[0] - img.shape[0]
                 if pad_width % 2 == 0:
-                    img = img[-pad_width / 2 : +pad_width / 2, ...]
+                    img = img[-pad_width // 2 : +pad_width // 2, ...]
                 else:
                     img = img[-np.floor(pad_width / 2) : +np.ceil(pad_width / 2), ...]
                 scale_shift = (sc, pad_width)
@@ -229,6 +229,9 @@ def rescale_to_original(
     iris_ellipse[1] = iris_ellipse[1] - np.floor(scale_shift[1] // 2)
     iris_ellipse[:-1] = iris_ellipse[:-1] * (1 / scale_shift[0])
 
+    """
+    This code appears buggy:
+
     if scale_shift[1] < 0:
         # Pad background
         seg_map = np.pad(
@@ -254,7 +257,11 @@ def rescale_to_original(
     edge_map = cv2.resize(
         edge_map, (orig_shape[1], orig_shape[0]), interpolation=cv2.INTER_NEAREST
     )
+
     return edge_map, seg_map, pupil_ellipse, iris_ellipse
+    """
+
+    return None, None, pupil_ellipse, iris_ellipse
 
 
 #%% Definition for processing per video
