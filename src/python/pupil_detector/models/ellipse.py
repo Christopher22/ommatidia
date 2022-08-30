@@ -26,6 +26,16 @@ class Ellipse(BaseModel):
     rotation: float = Field(alias="rotation")
     confidence: Optional[float] = Field(alias="confidence", default=None)
 
+    @validator("x")
+    def x_min(cls, value):
+        assert value >= 0
+        return value
+
+    @validator("y")
+    def y_min(cls, value):
+        assert value >= 0
+        return value
+
     @validator("rotation")
     def rotation_max(cls, value):
         assert value <= 3.14159265359

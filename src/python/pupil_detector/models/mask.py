@@ -2,7 +2,7 @@
 
 from typing import Optional, List
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 import numpy as np
 
 
@@ -14,6 +14,15 @@ class Annotation(BaseModel):
     x: int = Field(alias="x")
     y: int = Field(alias="y")
 
+    @validator("x")
+    def x_min(cls, value):
+        assert value >= 0
+        return value
+
+    @validator("y")
+    def y_min(cls, value):
+        assert value >= 0
+        return value
 
 class Mask(BaseModel):
     """

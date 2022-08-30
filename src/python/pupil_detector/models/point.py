@@ -16,18 +16,8 @@ class Point(BaseModel):
     confidence: Optional[float] = Field(alias="confidence", default=None)
 
     @validator("x")
-    def x_max(cls, value):
-        assert value <= 1
-        return value
-
-    @validator("x")
     def x_min(cls, value):
         assert value >= 0
-        return value
-
-    @validator("y")
-    def y_max(cls, value):
-        assert value <= 1
         return value
 
     @validator("y")
