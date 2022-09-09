@@ -1,0 +1,2 @@
+# PupilLocator
+This folder contains the pupil detector proposed in [Improving real-time CNN-based pupil detection through domain-specific data augmentation](https://doi.org/10.1145/3314111.3319914) . The code and the algorithm are licensed accordingly to the MIT license.
