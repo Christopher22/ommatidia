@@ -1,12 +1,64 @@
 import argparse
 import logging
 from pathlib import Path
+import sys
 
 from .docker import Image, InvalidContainerException
 from .test_runner import TestRunner
 
 
-def main() -> int:
+def test_detector(detector_dir: Path, show_output: bool) -> bool:
+    """
+    Test a specific Docker container for its suitability as a detector.
+    """
+
+    logging.info(
+        "Building the image at '%s' (show output: %s)... ",
+        str(detector_dir),
+        show_output,
+    )
+    try:
+        with Image(detector_dir, show_output=show_output) as image:
+            logging.info("Spawning the container '%s' ...", image.name_and_tag)
+            with image.spawn(show_output=show_output) as container:
+                # Start the detector
+                while not container.is_ready(3):
+                    logging.info("Waiting for detector not get ready ...")
+                logging.info("Detector sucessfully started")
+
+                # Run all the tests
+                test_runner = TestRunner(container)
+                logging.info("Found %d tests for the detector", len(test_runner))
+                for result in test_runner:
+                    if not result:
+                        logging.warning(str(result))
+
+                if test_runner:
+                    logging.info("All tests done without any error")
+                    return True
+                logging.info("Some tests failed")
+                return False
+    except InvalidContainerException as ex:
+        logging.warning(str(ex))
+        return False
+
+
+def test_detectors(detectors_dirs: Path, show_output: bool) -> bool:
+    """
+    Test all detectors within a directory.
+    """
+
+    all_valid = True
+    for entry in detectors_dirs.glob("*/Dockerfile"):
+        # Test the detector. However, we do not stop early!
+        if not test_detector(entry.parent, show_output=show_output):
+            all_valid = False
+        logging.info("Testing detector done\n")
+
+    return all_valid
+
+
+def parse_arguments() -> int:
     """
     The main routine for the package.
     """
@@ -27,37 +79,22 @@ def main() -> int:
         action="store_true",
         help="show the output of the building process",
     )
+    parser.add_argument(
+        "-a",
+        "--test_all",
+        action="store_true",
+        help="check all detectors within a folder",
+    )
+
     args = parser.parse_args()
 
-    logging.info(
-        "Building the image at '%s' (show output: %s)... ", args.detector, args.output
+    all_tests_valid = (
+        test_detectors(Path(args.detector), show_output=args.output)
+        if args.test_all
+        else test_detector(Path(args.detector), show_output=args.output)
     )
-    try:
-        with Image(Path(args.detector), show_output=args.output) as image:
-            logging.info("Spawning the container '%s' ...", image.name_and_tag)
-            with image.spawn(show_output=args.output) as container:
-                # Start the detector
-                while not container.is_ready(3):
-                    logging.info("Waiting for detector not get ready ...")
-                logging.info("Detector sucessfully started")
-
-                # Run all the tests
-                test_runner = TestRunner(container)
-                logging.info("Found %d tests for the detector", len(test_runner))
-                for result in test_runner:
-                    if not result:
-                        logging.warning(str(result))
-
-                if test_runner:
-                    logging.info("All tests done without any error")
-                    return 0
-                logging.info("Some tests failed")
-                return 1
-    except InvalidContainerException as ex:
-        logging.warning(str(ex))
-        return 1
+    return 0 if all_tests_valid else 1
 
 
 if __name__ == "__main__":
-    status = main()
-    # exit(status)
+    sys.exit(parse_arguments())
