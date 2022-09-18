@@ -7,7 +7,7 @@ from .docker import Image, InvalidContainerException
 from .test_runner import TestRunner
 
 
-def test_detector(detector_dir: Path, show_output: bool) -> bool:
+def test_detector(detector_dir: Path, show_output: bool, ignore_cache: bool) -> bool:
     """
     Test a specific Docker container for its suitability as a detector.
     """
@@ -18,7 +18,9 @@ def test_detector(detector_dir: Path, show_output: bool) -> bool:
         show_output,
     )
     try:
-        with Image(detector_dir, show_output=show_output) as image:
+        with Image(
+            detector_dir, show_output=show_output, ignore_cache=ignore_cache
+        ) as image:
             logging.info("Spawning the container '%s' ...", image.name_and_tag)
             with image.spawn(show_output=show_output) as container:
                 # Start the detector
@@ -43,7 +45,7 @@ def test_detector(detector_dir: Path, show_output: bool) -> bool:
         return False
 
 
-def test_detectors(detectors_dirs: Path, show_output: bool) -> bool:
+def test_detectors(detectors_dirs: Path, show_output: bool, ignore_cache: bool) -> bool:
     """
     Test all detectors within a directory.
     """
@@ -51,7 +53,9 @@ def test_detectors(detectors_dirs: Path, show_output: bool) -> bool:
     all_valid = True
     for entry in detectors_dirs.glob("*/Dockerfile"):
         # Test the detector. However, we do not stop early!
-        if not test_detector(entry.parent, show_output=show_output):
+        if not test_detector(
+            entry.parent, show_output=show_output, ignore_cache=ignore_cache
+        ):
             all_valid = False
         logging.info("Testing detector done\n")
 
@@ -85,13 +89,23 @@ def parse_arguments() -> int:
         action="store_true",
         help="check all detectors within a folder",
     )
+    parser.add_argument(
+        "-c",
+        "--ignore_cache",
+        action="store_true",
+        help="ignore existing caches",
+    )
 
     args = parser.parse_args()
 
     all_tests_valid = (
-        test_detectors(Path(args.detector), show_output=args.output)
+        test_detectors(
+            Path(args.detector), show_output=args.output, ignore_cache=args.ignore_cache
+        )
         if args.test_all
-        else test_detector(Path(args.detector), show_output=args.output)
+        else test_detector(
+            Path(args.detector), show_output=args.output, ignore_cache=args.ignore_cache
+        )
     )
     return 0 if all_tests_valid else 1
 

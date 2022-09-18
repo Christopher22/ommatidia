@@ -147,7 +147,11 @@ class Image:
     """
 
     def __init__(
-        self, path: Path, name_and_tag: Optional[str] = None, show_output: bool = False
+        self,
+        path: Path,
+        name_and_tag: Optional[str] = None,
+        show_output: bool = False,
+        ignore_cache: bool = False,
     ):
         if not path.is_dir() or not (path / "Dockerfile").is_file():
             raise ValueError("The given path does not point to a detector")
@@ -158,12 +162,17 @@ class Image:
             else Image._create_name_and_tag(path)
         )
         self._show_output = show_output
+        self._ignore_cache = ignore_cache
 
     def __enter__(self) -> "Image":
         output_target = subprocess.DEVNULL if not self._show_output else None
         try:
+            # Allow ignoring caches
+            commands = ["docker", "build", "-t", self.name_and_tag]
+            if self._ignore_cache:
+                commands.append("--no-cache")
             subprocess.run(
-                ("docker", "build", "-t", self.name_and_tag, "."),
+                commands + ["."],
                 cwd=self.path,
                 check=True,
                 stdout=output_target,
