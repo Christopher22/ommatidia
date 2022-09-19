@@ -1,9 +1,12 @@
 # coding: utf-8
 
+from ast import alias
+from email.policy import default
 from typing import Optional  # noqa: F401
 
 from pydantic import BaseModel, Field, validator  # noqa: F401
 
+from .sample import Sample
 
 class Ellipse(BaseModel):
     """
@@ -25,7 +28,8 @@ class Ellipse(BaseModel):
     minor: float = Field(alias="minor")
     rotation: float = Field(alias="rotation")
     confidence: Optional[float] = Field(alias="confidence", default=None)
-
+    sample: Optional[Sample] = Field(alias="sample", default=None)
+    
     @validator("x")
     def x_min(cls, value):
         assert value >= 0
@@ -38,12 +42,12 @@ class Ellipse(BaseModel):
 
     @validator("rotation")
     def rotation_max(cls, value):
-        assert value <= 3.14159265359
+        assert value <= 3.14159265359 * 2.0
         return value
 
     @validator("rotation")
     def rotation_min(cls, value):
-        assert value >= -3.14159265359
+        assert value >= 0.0
         return value
 
 

@@ -1,5 +1,6 @@
 import importlib.resources as pkg_resources
 
+import math
 import torch
 import numpy as np
 from pydantic import BaseModel
@@ -48,7 +49,8 @@ class Detector(AbstractDetector):
             y=pupil_ellipse[0],
             major=pupil_ellipse[3],
             minor=pupil_ellipse[2],
-            rotation=pupil_ellipse[4]
+            # We require PI to be positive
+            rotation=pupil_ellipse[4] + math.pi 
         )
 
     @classmethod

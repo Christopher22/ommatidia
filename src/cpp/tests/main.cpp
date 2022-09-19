@@ -24,13 +24,15 @@ static ommatidia::MetaData GenerateExampleData() {
 // Test the output send the the clients
 TEST_SUITE("Prediction Output") {
   TEST_CASE("Pupil center") {
-    ommatidia::PupilCenter center(4, 5, 0.7);
+    ommatidia::PupilCenter center(4, 5, 120, 130, 0.7);
     const auto serialized_ellipse = center.Serialize().dump();
 
     auto json = crow::json::load(serialized_ellipse);
     CHECK(json["type"] == "Point");
     CHECK(json["x"] == 4);
     CHECK(json["y"] == 5);
+    CHECK(json["sample"]["width"] == 120);
+    CHECK(json["sample"]["height"] == 130);
     CHECK(json["confidence"] == 0.7);
   }
 
@@ -46,7 +48,8 @@ TEST_SUITE("Prediction Output") {
     }
 
     ommatidia::Ellipse ellipse(4, 5, value1, value2,
-                               ommatidia::Radian::FromDegree(90.0), 0.7);
+                               ommatidia::Radian::FromDegree(90.0), 120, 130,
+                               0.7);
     const auto serialized_ellipse = ellipse.Serialize().dump();
 
     auto json = crow::json::load(serialized_ellipse);
@@ -55,6 +58,8 @@ TEST_SUITE("Prediction Output") {
     CHECK(json["y"] == 5);
     CHECK(json["major"] == 21.0);
     CHECK(json["minor"] == 20.0);
+    CHECK(json["sample"]["width"] == 120);
+    CHECK(json["sample"]["height"] == 130);
     CHECK(static_cast<float>(json["angle"].d()) ==
           doctest::Approx(ommatidia::Radian::PI / 2.0f).epsilon(0.01));
     CHECK(json["confidence"] == 0.7);
@@ -65,7 +70,7 @@ TEST_SUITE("Prediction Output") {
         cv::RotatedRect(cv::Point2f(5.0, 4.0), cv::Point2f(6.0, 7.0), 42.0),
         0.22);
 
-    ommatidia::Ellipse ellipse(pupil, pupil.confidence);
+    ommatidia::Ellipse ellipse(pupil, 120, 130, pupil.confidence);
     const auto serialized_ellipse = ellipse.Serialize().dump();
 
     auto json = crow::json::load(serialized_ellipse);
@@ -76,6 +81,8 @@ TEST_SUITE("Prediction Output") {
     CHECK(json["minor"] == 6.0);
     CHECK(static_cast<float>(json["angle"].d()) ==
           doctest::Approx(0.733f).epsilon(0.01));
+    CHECK(json["sample"]["width"] == 120);
+    CHECK(json["sample"]["height"] == 130);
     CHECK(json["confidence"] == 0.22);
   }
 }

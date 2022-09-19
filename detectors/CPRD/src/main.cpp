@@ -23,7 +23,9 @@ class Detection : public ommatidia::Detection {
     bool flag = detector_.extractEllipse(img_gray, detector_.pupil_rect_fine_,
                                          ellipse_rect, center_fitting);
 
-    return ommatidia::Ellipse(ellipse_rect, flag ? 1.0 : 0.0).Serialize();
+    return ommatidia::Ellipse(ellipse_rect, frame_mat.cols, frame_mat.rows,
+                              flag ? 1.0 : 0.0)
+        .Serialize();
   }
 
  private:

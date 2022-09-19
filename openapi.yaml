@@ -2,7 +2,7 @@ openapi: 3.0.0
 
 info:
   title: Ommatidia
-  version: 0.2.0
+  version: 0.3.0
   description: >-
     Unified and simplistic API to evaluate pupil detection algorithms for
     video-based eye tracking.
@@ -10,108 +10,108 @@ info:
     email: christopher@gundler.de
     name: Christopher Gundler
     url: https://gundler.de
-    
+
 paths:
   /:
     get:
       summary: Get the meta data of the detector
       responses:
-        '200':
+        "200":
           description: Meta data regarding the pupil detection algorithm
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MetaData'
-  
+                $ref: "#/components/schemas/MetaData"
+
   /config/:
     get:
       summary: Define the configurations for the pupil detection algorithm as an JSON Schema.
       responses:
-        '200':
+        "200":
           description: Configuration specified as an JSON Schema.
           content:
             application/json:
-                schema:
-                  $ref: '#/components/schemas/Config'
-    
+              schema:
+                $ref: "#/components/schemas/Config"
+
   /detections/:
     get:
       summary: Returns a list of running pupil detection algorithms.
       responses:
-        '200':
+        "200":
           description: A list of "detectionId" for running pupil detection algorithms.
           content:
             application/json:
-                schema:
-                  type: "array"
-                  items:
-                    type: "integer"
+              schema:
+                type: "array"
+                items:
+                  type: "integer"
       tags:
         - Detections
     post:
       summary: Initialize a new pupil detection algorithm with specific configuration.
       requestBody:
-        $ref: '#/components/requestBodies/Config'
+        $ref: "#/components/requestBodies/Config"
       responses:
-        '200':
+        "200":
           description: Instance successfully created.
-        '400':
+        "400":
           description: The given configuration is invalid.
           content:
             text/plain:
-                schema:
-                  type: string
+              schema:
+                type: string
 
       tags:
         - Detections
-        
+
   /detections/{detectionId}/:
     get:
       summary: Query an pupil detection algorithm and its configuration.
       parameters:
-        - $ref: '#/components/parameters/DetectionId'
+        - $ref: "#/components/parameters/DetectionId"
       responses:
-        '200':
+        "200":
           description: The specified configuration on creation.
           content:
             application/json:
               schema:
                 type: "object"
-        '404':
+        "404":
           description: The selected ID was not found
           content:
             text/plain:
-                schema:
-                  type: string
+              schema:
+                type: string
       tags:
         - Detections
     delete:
       summary: Delete the instance of the pupil detection algorithm and remove all associated resources.
       parameters:
-        - $ref: '#/components/parameters/DetectionId'
+        - $ref: "#/components/parameters/DetectionId"
       responses:
-        '200':
+        "200":
           description: The detection was successfully deleted.
-        '404':
+        "404":
           description: The selected ID was not found
       tags:
         - Detections
     post:
       summary: Evaluate a given image with the configured pupil detection algorihm.
       requestBody:
-        $ref: '#/components/requestBodies/Sample'
+        $ref: "#/components/requestBodies/Sample"
       parameters:
-        - $ref: '#/components/parameters/DetectionId'
+        - $ref: "#/components/parameters/DetectionId"
       responses:
-        '200':
+        "200":
           description: The estimated pupil.
           content:
             application/json:
               schema:
                 oneOf:
-                  - $ref: '#/components/schemas/Point'
-                  - $ref: '#/components/schemas/Ellipse'
-        '404':
+                  - $ref: "#/components/schemas/Point"
+                  - $ref: "#/components/schemas/Ellipse"
+        "404":
           description: The selected ID was not found
       tags:
         - Detections
@@ -137,7 +137,7 @@ components:
         application/json:
           schema:
             type: "object"
-    
+
   parameters:
     DetectionId:
       in: path
@@ -168,42 +168,41 @@ components:
         type:
           type: "string"
           enum: ["Point"]
-        x: 
-          $ref: '#/components/schemas/Position'
+        sample:
+          $ref: "#/components/schemas/SampleDescription"
+        x:
+          $ref: "#/components/schemas/Position"
         y:
-          $ref: '#/components/schemas/Position'
+          $ref: "#/components/schemas/Position"
         confidence:
-          $ref: '#/components/schemas/Confidence'
-      required: [type, x, y]
+          $ref: "#/components/schemas/Confidence"
+      required: [type, x, y, sample]
     Ellipse:
       type: object
       properties:
         type:
           type: "string"
           enum: ["Ellipse"]
+        sample:
+          $ref: "#/components/schemas/SampleDescription"
         x:
-          $ref: '#/components/schemas/Position'
+          $ref: "#/components/schemas/Position"
         y:
-          $ref: '#/components/schemas/Position'
+          $ref: "#/components/schemas/Position"
         major:
           type: number
-          format: float
           minimum: 0
-          maximum: 1
         minor:
           type: number
-          format: float
           minimum: 0
-          maximum: 1
         rotation:
           description: "Rotation in radians"
           type: number
-          format: float
           minimum: 0
           maximum: 6.28319
         confidence:
-          $ref: '#/components/schemas/Confidence'
-      required: [type, x, y, major, minor, rotation]
+          $ref: "#/components/schemas/Confidence"
+      required: [type, x, y, major, minor, rotation, sample]
     MetaData:
       type: object
       properties:
@@ -228,13 +227,21 @@ components:
             - Point
             - Ellipse
     Position:
-      description: "Relative position within an image. 1.0 refers to the width or height of the image, respectively."
+      description: "Absolute position within the sample. The value must be smaller than the actual image dimension"
       type: number
-      format: float
       minimum: 0
-      maximum: 1
+    SampleDescription:
+      type: object
+      properties:
+        width:
+          type: number
+          format: integer
+          minimum: 0
+        height:
+          type: number
+          format: integer
+          minimum: 0
 
 tags:
   - name: Detections
     description: Instances of the implemented pupil detection algorithm
-

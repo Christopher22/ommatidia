@@ -35,6 +35,9 @@ Server::Server(MetaData&& meta_data) noexcept
           });
 
   server_.validate();
+
+  // Disable logs on information level
+  server_.loglevel(crow::LogLevel::Warning);
 }
 
 void Server::Run(uint16_t port) { server_.port(port).multithreaded().run(); }

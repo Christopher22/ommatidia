@@ -1,9 +1,9 @@
-FROM ommatidia:0.5 AS builder
+FROM ommatidia_opencv3416:0.6 AS builder
 COPY . /ommatidia/executable
 
 # We need to download old versions of TBB and Boost
 RUN printf "\ndeb http://deb.debian.org/debian/ buster main" >> /etc/apt/sources.list \
-    && apt update && apt -y install --no-install-recommends libtbb-dev=2018~U6-4 libboost-dev=1.67.0.1 \
+    && apt update && apt -y install --no-install-recommends libtbb-dev=2018~U6-4 libtbb2=2018~U6-4 libboost-dev=1.67.0.1 \
     && apt clean && rm -rf /var/lib/apt/lists/*
 
 # We need to modify CMAKE_MODULE_PATH manually

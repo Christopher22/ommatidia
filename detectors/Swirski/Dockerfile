@@ -1,5 +1,10 @@
-FROM ommatidia:0.3 AS builder
+FROM ommatidia_opencv3416:0.6 AS builder
 COPY . /ommatidia/executable
+
+RUN apt update && \
+    apt -y install --no-install-recommends libtbb-dev libboost-dev && \
+    apt clean && rm -rf /var/lib/apt/lists/*
+
 RUN mkdir /ommatidia/executable/build \
     && cd /ommatidia/executable/build \
     && cmake -DCMAKE_BUILD_TYPE=Release .. \

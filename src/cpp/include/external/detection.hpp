@@ -26,7 +26,8 @@ class Detection : public ommatidia::Detection {
   inline Result<JsonValue> Predict(cv::InputArray sample) noexcept override {
     auto pupil = method_.runWithConfidence(sample.getMat());
     const auto confidence = pupil.confidence;
-    return ommatidia::Ellipse(pupil, confidence).Serialize();
+    return ommatidia::Ellipse(pupil, sample.cols(), sample.rows(), confidence)
+        .Serialize();
   }
 
  protected:

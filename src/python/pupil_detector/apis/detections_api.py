@@ -15,6 +15,7 @@ import numpy as np
 from ..models.point import Point
 from ..models.ellipse import Ellipse
 from ..models.mask import Mask
+from ..models.sample import Sample
 from ..detector import Detector, Config
 
 router = APIRouter()
@@ -127,8 +128,12 @@ async def detect(
     if image is None:
         raise HTTPException(status_code=400, detail="The provided sample is not valid")
 
-    return detector.detect(image)
+    # Run the detector
+    prediction = detector.detect(image)
 
+    # Enrich the result with the information regarding the sample
+    prediction.sample = Sample(width=image.shape[1], height=image.shape[0])
+    return prediction
 
 @router.get(
     "/detections/",

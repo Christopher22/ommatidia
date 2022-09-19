@@ -1,4 +1,5 @@
 from http.client import RemoteDisconnected
+from io import IOBase
 from pathlib import Path
 import string
 from typing import Optional, Union, Any
@@ -9,6 +10,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 from dataclasses import dataclass
 import json
+import tempfile
 
 
 class InvalidContainerException(Exception):
@@ -43,10 +45,13 @@ class Container:
         self.entry_point = f"http://127.0.0.1:{self.port}"
         self._process = None
         self._is_ready = False
-        self._show_output = show_output
+        self._output = (
+            subprocess.DEVNULL
+            if not show_output
+            else tempfile.TemporaryFile(mode="w+t")
+        )
 
     def __enter__(self) -> "Container":
-        output_target = subprocess.DEVNULL if not self._show_output else None
         self._process = subprocess.Popen(
             (
                 "docker",
@@ -55,12 +60,16 @@ class Container:
                 f"127.0.0.1:{self.port}:8080/tcp",
                 self.name_and_tag,
             ),
-            stdout=output_target,
-            stderr=output_target,
+            stdout=self._output,
+            stderr=subprocess.STDOUT,
         )
         return self
 
     def __exit__(self, _type, _value, _tb):
+        # Close the buffer if requested
+        if not isinstance(self._output, int):
+            self._output.close()
+
         if self._process is not None and self._process.returncode is not None:
             self._process.kill()
 
@@ -129,6 +138,19 @@ class Container:
         except HTTPError as error:
             return Response(error.code, error.read().decode("utf-8"))
 
+    @property
+    def output(self) -> Optional[str]:
+        """
+        Access the output of the detector written to the command line.
+        """
+        if not isinstance(self._output, int):
+            self._output.seek(0)
+            value = self._output.read()
+            self._output.seek(0, 2)
+            return value
+
+        return None
+
     @staticmethod
     def _find_free_port() -> int:
         """
@@ -150,7 +172,6 @@ class Image:
         self,
         path: Path,
         name_and_tag: Optional[str] = None,
-        show_output: bool = False,
         ignore_cache: bool = False,
     ):
         if not path.is_dir() or not (path / "Dockerfile").is_file():
@@ -161,11 +182,10 @@ class Image:
             if name_and_tag is not None
             else Image._create_name_and_tag(path)
         )
-        self._show_output = show_output
         self._ignore_cache = ignore_cache
+        self._output = tempfile.TemporaryFile(mode="w+t")
 
     def __enter__(self) -> "Image":
-        output_target = subprocess.DEVNULL if not self._show_output else None
         try:
             # Allow ignoring caches
             commands = ["docker", "build", "-t", self.name_and_tag]
@@ -175,15 +195,19 @@ class Image:
                 commands + ["."],
                 cwd=self.path,
                 check=True,
-                stdout=output_target,
-                stderr=output_target,
+                stdout=self._output,
+                stderr=subprocess.STDOUT,
             )
         except subprocess.CalledProcessError as ex:
-            raise InvalidContainerException("The building of the image failed") from ex
+            self._output.seek(0)
+            error_log = self._output.read()
+            raise InvalidContainerException(
+                f"The building of the image failed:\n{error_log}"
+            ) from ex
         return self
 
     def __exit__(self, _type, _value, _tb):
-        pass
+        self._output.close()
 
     def spawn(self, show_output: bool = False) -> Container:
         """

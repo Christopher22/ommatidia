@@ -18,9 +18,7 @@ def test_detector(detector_dir: Path, show_output: bool, ignore_cache: bool) -> 
         show_output,
     )
     try:
-        with Image(
-            detector_dir, show_output=show_output, ignore_cache=ignore_cache
-        ) as image:
+        with Image(detector_dir, ignore_cache=ignore_cache) as image:
             logging.info("Spawning the container '%s' ...", image.name_and_tag)
             with image.spawn(show_output=show_output) as container:
                 # Start the detector
@@ -38,6 +36,11 @@ def test_detector(detector_dir: Path, show_output: bool, ignore_cache: bool) -> 
                 if test_runner:
                     logging.info("All tests done without any error")
                     return True
+
+                # Print output on case of error, if requested  
+                output = container.output
+                if output is not None:
+                    logging.info(output)
                 logging.info("Some tests failed")
                 return False
     except InvalidContainerException as ex:

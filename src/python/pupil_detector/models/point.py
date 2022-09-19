@@ -4,6 +4,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field, validator
 
+from .sample import Sample
 
 class Point(BaseModel):
     """
@@ -14,6 +15,7 @@ class Point(BaseModel):
     x: float = Field(alias="x")
     y: float = Field(alias="y")
     confidence: Optional[float] = Field(alias="confidence", default=None)
+    sample: Optional[Sample] = Field(alias="sample", default=None)
 
     @validator("x")
     def x_min(cls, value):

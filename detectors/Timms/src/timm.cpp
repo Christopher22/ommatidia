@@ -2,7 +2,7 @@
 
 #include <queue>
 #include <iostream>
-#include <opencv2/highgui/highgui.hpp>
+// #include <opencv2/highgui/highgui.hpp>
 
 cv::Point Timm::pupil_center(const cv::Mat& eye_img) {
   using namespace std;

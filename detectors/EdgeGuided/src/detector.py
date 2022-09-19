@@ -1,6 +1,7 @@
 from enum import Enum
 from pathlib import Path
 
+import math
 import numpy as np
 import torch
 from pydantic import BaseModel
@@ -91,7 +92,7 @@ class Detector(AbstractDetector):
             y=pupil_ellipse[1],
             major=pupil_ellipse[2],
             minor=pupil_ellipse[3],
-            rotation=pupil_ellipse[4]
+            rotation=pupil_ellipse[4] + math.pi
         )
 
     @classmethod

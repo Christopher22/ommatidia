@@ -60,6 +60,13 @@ class TestDetect(Test):
         self.assert_isinstance(response["x"], (float, int))
         self.assert_isinstance(response["y"], (float, int))
 
+        # Test the newly enforces information regarding the given sample
+        self.assert_in("sample", response)
+        self.assert_in("width", response["sample"])
+        self.assert_in("height", response["sample"])
+        self.assert_equal(response["sample"]["width"], 142)
+        self.assert_equal(response["sample"]["height"], 106)
+
 
 class TestDetectInvalid(Test):
     def __init__(self):
@@ -127,4 +134,6 @@ class TestQuery(Test):
         self.assert_equal(creation_response.status, 200)
 
         # The old IDs may remain in the list. Check only for the two most recent ones
-        self.assert_equal(creation_response.json[-2:], [created_id_1, created_id_2])
+        response = creation_response.json
+        self.assert_in(value=created_id_1, collection=response)
+        self.assert_in(value=created_id_2, collection=response)

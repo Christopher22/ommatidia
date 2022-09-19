@@ -7,7 +7,9 @@
 namespace ommatidia {
 class Prediction {
  public:
-  constexpr Prediction(Confidence confidence) noexcept : confidence_(confidence) {}
+  constexpr Prediction(Position width, Position height,
+                       Confidence confidence) noexcept
+      : confidence_(confidence), width_(width), height_(height) {}
   Prediction(Prediction const &) = delete;
   Prediction &operator=(Prediction const &) = delete;
 
@@ -18,6 +20,14 @@ class Prediction {
   inline bool operator!() const noexcept { return this->confidence_ >= 0.0; }
 
  protected:
+  inline ommatidia::JsonValue GetSampleData() const {
+    const std::unordered_map<std::string, ommatidia::JsonValue> sample = {
+        {"width", ommatidia::JsonValue(width_)},
+        {"height", ommatidia::JsonValue(height_)}};
+    return ommatidia::JsonValue(sample);
+  }
+
   Confidence confidence_;
+  Position width_, height_;
 };
 }  // namespace ommatidia

@@ -5,6 +5,7 @@ from typing import Optional, List
 from pydantic import BaseModel, Field, validator
 import numpy as np
 
+from .sample import Sample
 
 class Annotation(BaseModel):
     """
@@ -32,7 +33,8 @@ class Mask(BaseModel):
     type: str = Field("Mask", alias="type", const=True)
     mask: List[Annotation] = Field(alias="mask")
     confidence: Optional[float] = Field(alias="confidence", default=None)
-
+    sample: Optional[Sample] = Field(alias="sample", default=None)
+    
     @staticmethod
     def from_numpy(mask: np.ndarray) -> "Mask":
         """

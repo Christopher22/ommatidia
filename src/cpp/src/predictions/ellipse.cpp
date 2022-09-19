@@ -5,18 +5,21 @@
 namespace ommatidia {
 
 Ellipse::Ellipse(Position x, Position y, Size first_size, Size second_size,
-                 Radian radian, Confidence confidence)
-    : Prediction(confidence),
+                 Radian radian, Position width, Position height,
+                 Confidence confidence)
+    : Prediction(width, height, confidence),
       x_(x),
       y_(y),
       major_(std::max(first_size, second_size)),
       minor_(std::min(first_size, second_size)),
       angle_(radian) {}
 
-Ellipse::Ellipse(const cv::RotatedRect &rotated_rect, Confidence confidence)
+Ellipse::Ellipse(const cv::RotatedRect &rotated_rect, Position width,
+                 Position height, Confidence confidence)
     : Ellipse(rotated_rect.center.x, rotated_rect.center.y,
               rotated_rect.size.width, rotated_rect.size.height,
-              Radian::FromDegree(rotated_rect.angle), confidence) {}
+              Radian::FromDegree(rotated_rect.angle), width, height,
+              confidence) {}
 
 JsonValue Ellipse::Serialize() const noexcept {
   return JsonValue({
@@ -27,6 +30,7 @@ JsonValue Ellipse::Serialize() const noexcept {
       std::make_pair("minor", static_cast<double>(minor_)),
       std::make_pair("angle", angle_),
       std::make_pair("confidence", static_cast<double>(confidence_)),
+      std::make_pair("sample", this->GetSampleData()),
   });
 }
 

@@ -9,15 +9,17 @@
 class Detection : public ommatidia::Detection {
  public:
   inline Detection(int blur = 0, int window_width = 150)
-      : ommatidia::Detection(), detector_() {}
+      : ommatidia::Detection(), detector_() {
+    detector_.setup(USE_NO_VEC);
+  }
 
   ommatidia::Result<ommatidia::JsonValue> Predict(
       cv::InputArray sample) noexcept override {
     auto sample_mat = sample.getMat();
     auto detection = std::get<0>(detector_.pupil_center(sample_mat));
-    ommatidia::PupilCenter detected_center(ommatidia::Position(detection.x),
-                                           ommatidia::Position(detection.y),
-                                           -1.0f);
+    ommatidia::PupilCenter detected_center(
+        ommatidia::Position(detection.x), ommatidia::Position(detection.y),
+        sample_mat.cols, sample_mat.rows, -1.0f);
     return detected_center.Serialize();
   }
 
