@@ -3,19 +3,22 @@ threads = 4
 buffer_size = 128
 
 # All the available hosts. If skipped, ommatidita will try to stick to a local host.
-[[host]]
+[[engines]]
 name = "default"
-host = "127.0.0.1"
-port = 1234
+host = "host.docker.internal"
+port = 2375
 
-[[detector]]
-name = "PuRe - Default"
-image = "pure:1.0"
-host = "default"
+[[detectors]]
+name = "pure"
+image = "pure:0.1"
+#host = "default"
 config = { width = 120, height = 120 }
 
 # The following elements are the datasets
-[[data]]
+[[datasets]]
 name = "Example dataset"
 type = "filesystem"
-pattern = ["test/test12.png", "test/*/*.jpg"]
+patterns = [
+    "local_data/Pictures/anleitung_1.png",
+    "local_data/Pictures/Bild1.png",
+]

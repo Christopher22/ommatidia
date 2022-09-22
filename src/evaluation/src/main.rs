@@ -1,6 +1,6 @@
-use std::io::Read;
-
 use ommatidia::{ErrorHandler, Estimates};
+use std::env;
+use std::io::Read;
 
 mod config;
 mod error_printer;
@@ -17,6 +17,15 @@ fn load_config() -> Result<config::Config, String> {
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
+    // Allow querying of correct usage
+    match env::args().nth(1) {
+        Some(value) if value.contains("help") => {
+            println!("USAGE: EXECUTABLE < CONFIG_FILE");
+            return;
+        }
+        _ => {}
+    }
+
     let error_handler = error_printer::ErrorPrinter::default();
     let config = match load_config() {
         Ok(config) => config,
