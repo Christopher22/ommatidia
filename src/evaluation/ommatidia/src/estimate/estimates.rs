@@ -135,6 +135,10 @@ mod tests {
                 estimate: crate::Estimate::Point(Point {
                     pos: crate::Position { x: 1, y: 2 },
                     confidence: Some(1.0),
+                    sample: crate::estimate::Sample {
+                        width: 42,
+                        height: 43,
+                    },
                 }),
             }),
             Err(DetectionError {
@@ -150,6 +154,10 @@ mod tests {
                 estimate: crate::Estimate::Point(Point {
                     pos: crate::Position { x: 1, y: 2 },
                     confidence: Some(0.7),
+                    sample: crate::estimate::Sample {
+                        width: 42,
+                        height: 43,
+                    },
                 }),
             }),
         ])];

@@ -23,10 +23,16 @@ impl From<Ellipse> for Estimate {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
 pub struct Position {
     pub x: u32,
     pub y: u32,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Serialize, Deserialize)]
+pub struct Sample {
+    pub width: u32,
+    pub height: u32,
 }
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
@@ -37,6 +43,7 @@ pub struct Point {
     #[serde(flatten)]
     pub pos: Position,
     pub confidence: Option<f32>,
+    pub sample: Sample,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -47,15 +54,16 @@ pub struct Ellipse {
     pub minor: f32,
     pub angle: Radian,
     pub confidence: Option<f32>,
+    pub sample: Sample,
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Ellipse, Estimate, Point, Position, Radian};
+    use super::{Ellipse, Estimate, Point, Position, Radian, Sample};
 
     #[test]
     fn test_ellipse() {
-        const EXAMPLE: &str = r#"{ "type": "Ellipse", "x": 1, "y": 2, "major": 4, "minor": 3, "angle": 0.5, "confidence": 0.1 }"#;
+        const EXAMPLE: &str = r#"{ "type": "Ellipse", "x": 1, "y": 2, "major": 4, "minor": 3, "angle": 0.5, "confidence": 0.1, "sample": { "width": 42, "height": 43 } }"#;
         let ellipse: Estimate = serde_json::from_str(EXAMPLE).expect("valid JSON");
 
         assert_eq!(
@@ -65,15 +73,18 @@ mod tests {
                 major: 4.0,
                 minor: 3.0,
                 angle: Radian(0.5),
-                confidence: Some(0.1)
+                confidence: Some(0.1),
+                sample: Sample {
+                    width: 42,
+                    height: 43
+                }
             })
         )
     }
 
     #[test]
     fn test_ellipse_without_confidence() {
-        const EXAMPLE: &str =
-            r#"{ "type": "Ellipse", "x": 1, "y": 2, "major": 4, "minor": 3, "angle": 0.5}"#;
+        const EXAMPLE: &str = r#"{ "type": "Ellipse", "x": 1, "y": 2, "major": 4, "minor": 3, "angle": 0.5, "sample": { "width": 42, "height": 43 }}"#;
         let ellipse: Estimate = serde_json::from_str(EXAMPLE).expect("valid JSON");
 
         assert_eq!(
@@ -83,35 +94,48 @@ mod tests {
                 major: 4.0,
                 minor: 3.0,
                 angle: Radian(0.5),
-                confidence: None
+                confidence: None,
+                sample: Sample {
+                    width: 42,
+                    height: 43
+                }
             })
         )
     }
 
     #[test]
     fn test_point() {
-        const EXAMPLE: &str = r#"{ "type": "Point", "x": 1, "y": 2, "confidence": 0.1 }"#;
+        const EXAMPLE: &str = r#"{ "type": "Point", "x": 1, "y": 2, "confidence": 0.1, "sample": { "width": 42, "height": 43 } }"#;
         let point: Estimate = serde_json::from_str(EXAMPLE).expect("valid JSON");
 
         assert_eq!(
             point,
             Estimate::Point(Point {
                 pos: Position { x: 1, y: 2 },
-                confidence: Some(0.1)
+                confidence: Some(0.1),
+                sample: Sample {
+                    width: 42,
+                    height: 43
+                }
             })
         )
     }
 
     #[test]
     fn test_point_without_confidence() {
-        const EXAMPLE: &str = r#"{ "type": "Point", "x": 1, "y": 2 }"#;
+        const EXAMPLE: &str =
+            r#"{ "type": "Point", "x": 1, "y": 2, "sample": { "width": 42, "height": 43 } }"#;
         let point: Estimate = serde_json::from_str(EXAMPLE).expect("valid JSON");
 
         assert_eq!(
             point,
             Estimate::Point(Point {
                 pos: Position { x: 1, y: 2 },
-                confidence: None
+                confidence: None,
+                sample: Sample {
+                    width: 42,
+                    height: 43
+                }
             })
         )
     }
