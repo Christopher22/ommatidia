@@ -25,31 +25,36 @@ impl std::fmt::Display for DetectionError {
             DetectionErrorType::CreationResponseUnexpected(reason) => {
                 write!(
                     f,
-                    "the pupil detection algorithm responded unexpectedly: {}",
-                    reason
+                    "the pupil detection algorithm '{}' responded unexpectedly: {}",
+                    self.detector, reason
                 )
             }
             DetectionErrorType::ConnectionFailure(error) => {
-                write!(f, "connection failed: {}", error)
+                write!(
+                    f,
+                    "connection failed tp detection algorithm '{}': {}",
+                    self.detector, error
+                )
             }
             DetectionErrorType::EstimationInvalid(identifier) => {
                 write!(
                     f,
-                    "pupil detection algorithm '{}' sent invalid payload during detection",
+                    "pupil detection algorithm '{}' sent invalid payload during detection of sample '{}'",
+                    self.detector,
                     identifier
                 )
             }
             DetectionErrorType::EstimationResponseUnexpected(identifier, error) => {
                 write!(
                     f,
-                    "pupil detection algorithm '{}' returned an unexpected response: {}",
-                    identifier, error
+                    "pupil detection algorithm '{}' returned an unexpected response for sample '{}': {}",
+                    self.detector, identifier, error
                 )
             }
             DetectionErrorType::EstimationFailed(identifier, message) => write!(
                 f,
-                "pupil detection algorithm '{} failed to estimate a pupil: {}",
-                identifier, message
+                "pupil detection algorithm '{} failed to estimate a pupil for sample '{}': {}",
+                self.detector, identifier, message
             ),
         }
     }
