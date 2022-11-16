@@ -1,16 +1,15 @@
-from http.client import RemoteDisconnected
-from io import IOBase
-from pathlib import Path
-import string
-from typing import Optional, Union, Any
-import subprocess
-from contextlib import closing
+import json
 import socket
+import string
+import subprocess
+import tempfile
+from contextlib import closing
+from dataclasses import dataclass
+from http.client import RemoteDisconnected
+from pathlib import Path
+from typing import Any, Optional, Union
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
-from dataclasses import dataclass
-import json
-import tempfile
 
 
 class InvalidContainerException(Exception):
@@ -31,6 +30,9 @@ class Response:
 
     @property
     def json(self) -> Any:
+        """
+        Format the body as JSON and return it.
+        """
         return json.loads(self.body)
 
 
@@ -70,8 +72,10 @@ class Container:
         if not isinstance(self._output, int):
             self._output.close()
 
-        if self._process is not None and self._process.returncode is not None:
-            self._process.kill()
+        if self._process is not None and self._process.returncode is None:
+            # Kill the process
+            Container._kill(self.container_id)
+            self._process.wait(5)
 
     def is_ready(self, wait: int) -> bool:
         """
@@ -151,6 +155,34 @@ class Container:
 
         return None
 
+    @property
+    def container_id(self) -> str:
+        """
+        Query the ID of the container. This operation is rather expensive, consider catching it.
+        """
+        with subprocess.Popen(
+            (
+                "docker",
+                "ps",
+                "--format",
+                '"{{.ID}}"',
+                "--filter",
+                f"publish={self.port}",
+            ),
+            stdout=subprocess.PIPE,
+        ) as proc:
+            try:
+                stdout, _ = proc.communicate(timeout=5)
+                output = stdout.decode("ascii", errors="ignore").strip().strip('"')
+                if len(output) != 12:
+                    raise InvalidContainerException(
+                        f"Unable to identify the running container. Id is malformed: '{output}'."
+                    )
+                return output
+            except subprocess.TimeoutExpired as ex:
+                proc.kill()
+                raise InvalidContainerException("Querying ID failed") from ex
+
     @staticmethod
     def _find_free_port() -> int:
         """
@@ -161,6 +193,31 @@ class Container:
             sock.bind(("", 0))
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             return int(sock.getsockname()[1])
+
+    @staticmethod
+    def _kill(name: str, remove: bool = True):
+        with subprocess.Popen(("docker", "kill", name), stdout=subprocess.PIPE) as proc:
+            try:
+                exit_code = proc.wait(5)
+                if exit_code != 0:
+                    raise InvalidContainerException(
+                        f"Unable to kill container, exit code {exit_code}"
+                    )
+            except subprocess.TimeoutExpired as ex:
+                proc.kill()
+                raise InvalidContainerException(
+                    "Unable to kill running container"
+                ) from ex
+
+        if remove:
+            with subprocess.Popen(
+                ("docker", "rm", name), stdout=subprocess.PIPE
+            ) as proc:
+                exit_code = proc.wait(5)
+                if exit_code != 0:
+                    raise InvalidContainerException(
+                        f"Unable to remove container, exit code {exit_code}"
+                    )
 
 
 class Image:
