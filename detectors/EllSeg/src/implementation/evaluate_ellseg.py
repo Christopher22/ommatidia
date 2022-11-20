@@ -71,7 +71,7 @@ def preprocess_frame(img, op_shape, align_width=True):
                 if pad_width%2 == 0:
                     img = np.pad(img, ((pad_width//2, pad_width//2), (0, 0)))
                 else:
-                    img = np.pad(img, ((np.floor(pad_width/2), np.ceil(pad_width/2)), (0, 0)))
+                    img = np.pad(img, ((int(np.floor(pad_width/2)), int(np.ceil(pad_width/2))), (0, 0)))
                 scale_shift = (sc, pad_width)
 
             elif op_shape[0] < img.shape[0]:
@@ -80,7 +80,7 @@ def preprocess_frame(img, op_shape, align_width=True):
                 if pad_width%2 == 0:
                     img = img[-pad_width/2:+pad_width/2, ...]
                 else:
-                    img = img[-np.floor(pad_width/2):+np.ceil(pad_width/2), ...]
+                    img = img[-int(np.floor(pad_width/2)):+int(np.ceil(pad_width/2)), ...]
                 scale_shift = (sc, pad_width)
 
             else:
