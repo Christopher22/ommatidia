@@ -21,7 +21,7 @@ RUN mkdir -p /ommatidia/dependencies && cd /ommatidia/dependencies \
 # -------------------------------------------
 FROM debian:bullseye-slim
 LABEL maintainer="christopher@gundler.de"
-LABEL version="0.6"
+LABEL version="0.7"
 LABEL description="Base image installing the ommatidia library and all required toolkits to build C++"
 
 ARG OPENCV_VERSION=3.4.2

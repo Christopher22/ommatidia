@@ -1,4 +1,4 @@
-FROM ommatidia_opencv3416:0.6 AS builder
+FROM ommatidia_opencv3416:0.7 AS builder
 COPY . /ommatidia/executable
 
 RUN apt update && \

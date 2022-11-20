@@ -79,8 +79,8 @@ packageProject(
   DEPENDENCIES "Crow;OpenCV"
 )
 
-# Support tests
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+# Support tests (but only if we can check the "external" code, too)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING AND (NOT ALLOW_COMMERCIAL_USE))
   CPMAddPackage("gh:doctest/doctest@2.4.8")
 
   file(GLOB_RECURSE test_cpp CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp")
