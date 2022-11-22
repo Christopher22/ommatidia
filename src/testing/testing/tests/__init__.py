@@ -28,6 +28,17 @@ class Test:
                 f"{caller.filename}:{caller.lineno} {value1} != {value2}{msg}"
             )
 
+    def assert_smaller(self, value: Any, maximum_value: Type, msg: str = "") -> None:
+        """
+        Ensure a value is the instance of a specific class
+        """
+        if value >= maximum_value:
+            caller = getframeinfo(stack()[1][0])
+            msg = "" if len(msg) == 0 else f": {msg}"
+            raise AssertionError(
+                f"{caller.filename}:{caller.lineno} '{value}' is not smaller than {maximum_value}{msg}"
+            )
+
     def assert_isinstance(self, value: Any, expected_type: Type, msg: str = "") -> None:
         """
         Ensure a value is the instance of a specific class

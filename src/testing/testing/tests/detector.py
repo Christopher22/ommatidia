@@ -1,7 +1,6 @@
-import importlib.resources
-
-from . import Test, Container, res
-
+from . import Test, Container
+from .res import Sample
+import math
 
 class TestCreate(Test):
     def __init__(self):
@@ -46,12 +45,13 @@ class TestDetect(Test):
         self.assert_equal(creation_response.status, 200, creation_response.body)
 
         # Send invalid data to the detector
-        sample = importlib.resources.read_binary(res, "example.png")
+        sample = next(Sample.find_all())
+
         created_id = int(creation_response.json)
         response = container.request(
             f"/detections/{created_id}/",
             method="POST",
-            body=sample,
+            body=sample.load(),
             content_type="image/png",
         )
 
@@ -64,9 +64,51 @@ class TestDetect(Test):
         self.assert_in("sample", response)
         self.assert_in("width", response["sample"])
         self.assert_in("height", response["sample"])
-        self.assert_equal(response["sample"]["width"], 142)
-        self.assert_equal(response["sample"]["height"], 106)
+        self.assert_equal(response["sample"]["width"], sample.width)
+        self.assert_equal(response["sample"]["height"], sample.height)
 
+class TestCorrectDetection(Test):
+    def __init__(self):
+        super().__init__("TestCorrectDetection")
+
+    def run(self, container: Container):
+        MAXIMAL_PIXEL_DIFFERENCE = 20
+
+        # Create detector
+        creation_response = container.request("/detections/", method="POST", body={})
+        self.assert_equal(creation_response.status, 200, creation_response.body)
+
+        for sample in Sample.find_all():
+            created_id = int(creation_response.json)
+            response = container.request(
+                f"/detections/{created_id}/",
+                method="POST",
+                body=sample.load(),
+                content_type="image/png",
+            )
+
+            self.assert_equal(response.status, 200)
+            response = response.json
+            
+            # The detector indicate it has no idea. Skip the image
+            if "confidence" in response and (response["confidence"] is None or response["confidence"] <= 0.0):
+                continue
+        
+            self.assert_smaller(
+                ((sample.x - response["x"]) ** 2 + (sample.y - response["y"]) ** 2) ** 0.5, 
+                MAXIMAL_PIXEL_DIFFERENCE, 
+                f"X: {response} [{sample}]"
+            )
+            
+            # Only if their is associated ellipse data
+            if "major" in response:
+                 # Ensure a proper angle
+                self.assert_equal(response["angle"] >= 0.0 and response["angle"] <= math.pi * 2, True, msg="Angle invalid")
+
+                # We need a smarter evaluation function here ...
+                # self.assert_smaller(abs(sample.major - response["major"]), MAXIMAL_PIXEL_DIFFERENCE, f"Major axis: {response} [{sample}]")
+                # self.assert_smaller(abs(sample.minor - response["minor"]), MAXIMAL_PIXEL_DIFFERENCE, f"Minor axis: {response} [{sample}]")
+                # self.assert_smaller(abs(sample.angle - response["angle"]), 0.2, f"Angle: {response} [{sample}]")
 
 class TestDetectInvalid(Test):
     def __init__(self):
