@@ -1,1 +1,1 @@
-pupil-detectors
+pupil-detectors==2.0.2

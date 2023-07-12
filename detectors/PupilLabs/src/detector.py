@@ -8,8 +8,10 @@ from . import AbstractDetector
 from .models.ellipse import Ellipse
 from .models.meta_data import MetaData
 
+
 class Config(BaseModel):
     """An empty base model used for config."""
+
 
 class Detector(AbstractDetector):
     def __init__(self, _: Config = Config()):
@@ -23,9 +25,9 @@ class Detector(AbstractDetector):
             y=result["center"][1],
             major=result["axes"][0],
             minor=result["axes"][1],
-            rotation=result["angle"] * (math.pi / 180.0)
+            rotation=math.radians(int(result["angle"]) % 360),
         )
-    
+
     @classmethod
     def metadata(cls) -> MetaData:
         return MetaData(
