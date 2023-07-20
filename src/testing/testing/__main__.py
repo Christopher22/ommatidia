@@ -5,6 +5,7 @@ from dataclasses import dataclass, field, InitVar
 from typing import Sequence, Tuple, Optional, List
 import csv
 import sys
+import os
 
 from .docker import Image, Container, InvalidContainerException
 from .test_runner import TestRunner
@@ -36,7 +37,7 @@ class DetectorHandler:
         )
         try:
             with Image(
-                self.detector_dir_or_image, ignore_cache=self.ignore_cache
+                Path(self.detector_dir_or_image), ignore_cache=self.ignore_cache
             ) as image:
                 return self._spawn_container(image.name_and_tag)
         except InvalidContainerException as ex:
@@ -76,6 +77,14 @@ class DetectorHandler:
 
     @property
     def is_image(self):
+        # It is more complex on Windows due to the "C:"
+        if os.name == "nt":
+            truncated_value = (
+                self.detector_dir_or_image
+                if len(self.detector_dir_or_image) <= 2
+                else self.detector_dir_or_image[2:]
+            )
+            return ":" in truncated_value
         return ":" in self.detector_dir_or_image
 
 

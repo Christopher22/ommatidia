@@ -55,7 +55,7 @@ class TestDetect(Test):
             content_type="image/png",
         )
 
-        self.assert_equal(response.status, 200)
+        self.assert_equal(response.status, 200, response.body)
         response = response.json
         self.assert_isinstance(response["x"], (float, int))
         self.assert_isinstance(response["y"], (float, int))
