@@ -65,7 +65,7 @@ class DetectorHandler:
         all_valid = True
         for entry in Path(self.detector_dir_or_image).glob("*/Dockerfile"):
             # Run the detector. However, we do not stop early on error!
-            self.detector_dir_or_image = entry.parent
+            self.detector_dir_or_image = str(entry.parent)
             if not self.run():
                 all_valid = False
             logging.info("Testing detector done\n")
