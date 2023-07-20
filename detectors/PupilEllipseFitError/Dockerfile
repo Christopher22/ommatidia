@@ -1,6 +1,17 @@
-FROM ommatidia-py3.6.12-cv3.4-np1.19.2:0.1 AS python_environment
-COPY requirements.txt requirements.txt
-RUN $MICROMAMBA_INSTALL requirements.txt $MICROMAMBA_INSTALL_DEFAULT && $MICROMAMBA_CLEAR
+FROM ommatidia-py3.6.12-cv3.4-np1.19:0.1 AS python_environment
+COPY --chown=$MAMBA_USER:$MAMBA_USER env.yaml env.yaml
+
+# Fix "libgthread-2.0.so.0: cannot open shared object file: No such file or directory"
+USER root
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive  \
+    && apt-get -y install --no-install-recommends libglib2.0-0 \
+    && apt-get clean -y && rm -rf /var/lib/apt/lists/*
+USER $MAMBA_USER
+
+RUN micromamba install -y -n base -f env.yaml && $MICROMAMBA_CLEAR
+
+SHELL ["micromamba", "run", "-n", "base", "/bin/bash", "-c"]
+RUN python -m pip install --no-cache-dir opencv-python-headless==3.4.2.17
 
 FROM python_environment
 COPY --chown=$MAMBA_USER:$MAMBA_USER src/detector.py ${PUPIL_DETECTOR_DIR}/detector.py
