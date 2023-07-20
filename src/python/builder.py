@@ -73,12 +73,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Build the appropiate container for a given Dockerfile"
     )
-    parser.add_argument("path", type=str, help="folder containing (possible multiple) detectors")
+    parser.add_argument(
+        "path", type=str, help="folder containing (possible multiple) detectors"
+    )
     args = parser.parse_args()
 
-    # Parse all the files within 
+    # Parse all the files within
     image_definitions = [
-        ImageDefinition.parse(path) for path in Path(args.path).glob("*/Dockerfile")
+        ImageDefinition.parse(path) for path in Path(args.path).rglob("Dockerfile")
     ]
     image_definitions = set(
         image_definition
