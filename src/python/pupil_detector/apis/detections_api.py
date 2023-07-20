@@ -124,6 +124,7 @@ async def detect(
 
     # Try to decode the image from bytes
     image_data: bytes = await request.body()
+    # Drop the dependency on OpenCV: Image.open(io.BytesIO(image_data)).convert('L')
     image = cv.imdecode(np.frombuffer(image_data, dtype=np.uint8), cv.IMREAD_GRAYSCALE)
     if image is None:
         raise HTTPException(status_code=400, detail="The provided sample is not valid")
@@ -134,6 +135,7 @@ async def detect(
     # Enrich the result with the information regarding the sample
     prediction.sample = Sample(width=image.shape[1], height=image.shape[0])
     return prediction
+
 
 @router.get(
     "/detections/",
