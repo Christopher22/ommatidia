@@ -821,3 +821,5 @@ detectors/__TODO
 detectors/__EXCLUDED
 local_data
 output
+data
+data_annotated
