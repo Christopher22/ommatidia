@@ -147,9 +147,11 @@ class EvaluateDetector(DetectorHandler):
                 )
                 if raw_result.status != 200:
                     logging.warning(
-                        "Detector '%s' failed on '%s'",
+                        "Detector '%s' failed (code: %s) on '%s': '%s'",
                         name_and_tag,
+                        raw_result.status,
                         image_path.name,
+                        raw_result.body,
                     )
                     continue
 
