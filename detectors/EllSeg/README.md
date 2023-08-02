@@ -1,0 +1,2 @@
+# EllSeg
+This folder contains the EllSeg pupil detector proposed in [EllSeg: An Ellipse Segmentation Framework for Robust Gaze Tracking](https://doi.org/10.1109/TVCG.2021.3067765) by R. S. Kothari, A. K. Chaudhary, R. J. Bailey, J. Pelz, and G. Diaz. The code and the algorithm are licensed under MIT.
