@@ -52,19 +52,23 @@ class ImageDefinitionPython(ImageDefinition):
 
     version_py: str
     version_numpy: str
+    use_cuda: bool
 
     def __str__(self) -> str:
-        return f"ommatidia-py{self.version_py}-cv{self.version_opencv}-np{self.version_numpy}:{self.image_version}"
+        return f"ommatidia-py{self.version_py}-cv{self.version_opencv}-np{self.version_numpy}{'-cuda' if self.use_cuda else ''}:{self.image_version}"
 
     def _docker_args(self) -> Mapping[str, str]:
         """
         Calculate the build arguments for Docker.
         """
-        return {
+        args = {
             "VERSION_PYTHON": self.version_py,
             "VERSION_OPENCV": self.version_opencv,
             "VERSION_NUMPY": self.version_numpy,
         }
+        if self.use_cuda:
+            args["MICROMAMBA_TAG"] = "focal-cuda-11.3.1"
+        return args
 
     def _template_path(self) -> Path:
         return Path(__file__).parent / "python"
@@ -77,17 +81,18 @@ class ImageDefinitionPython(ImageDefinition):
 
         with file_name.open(mode="r", encoding="utf8") as file:
             regex = re.compile(
-                r"FROM\s+ommatidia-py(?P<py>[0-9\.]+)-cv(?P<cv>[0-9\.]+)-np(?P<np>[0-9\.]+):(?P<version>[0-9\.]+)"
+                r"FROM\s+ommatidia-py(?P<py>[0-9\.]+)-cv(?P<cv>[0-9\.]+)-np(?P<np>[0-9\.]+)(?P<cuda>-cuda)?:(?P<version>[0-9\.]+)"
             )
-            required_versions = regex.match(file.read())
-            if required_versions is None:
+            image_config = regex.match(file.read())
+            if image_config is None:
                 return None
 
             return ImageDefinitionPython(
-                image_version=required_versions.group("version"),
-                version_py=required_versions.group("py"),
-                version_opencv=required_versions.group("cv"),
-                version_numpy=required_versions.group("np"),
+                image_version=image_config.group("version"),
+                version_py=image_config.group("py"),
+                version_opencv=image_config.group("cv"),
+                version_numpy=image_config.group("np"),
+                use_cuda=image_config.group("cuda") is not None,
             )
 
 

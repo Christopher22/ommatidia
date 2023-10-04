@@ -1,4 +1,5 @@
-FROM mambaorg/micromamba:latest as builder
+ARG MICROMAMBA_TAG=focal
+FROM mambaorg/micromamba:$MICROMAMBA_TAG as builder
 
 # Enable usage of mamba within the Dockerfile
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
@@ -28,7 +29,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive  \
 USER $MAMBA_USER
 
 # Those commands must be used within the child Dockerfiles
-ENV MICROMAMBA_INSTALL='micromamba install -y -n base --channel anaconda --channel conda-forge --channel pytorch --channel bioconda -f '
+ENV MICROMAMBA_INSTALL='micromamba install -y -n base --channel nvidia --channel anaconda --channel conda-forge --channel pytorch --channel bioconda -f '
 ENV MICROMAMBA_INSTALL_DEFAULT=" python=${VERSION_PYTHON} fastapi=${VERSION_FASTAPI} opencv=${VERSION_OPENCV} numpy=${VERSION_NUMPY} requests=${VERSION_REQUESTS} uvicorn=${VERSION_UVICORN} contextlib2=${VERSION_CONTEXTLIB2}"
 ENV MICROMAMBA_CLEAR='micromamba clean --all --yes '
 
