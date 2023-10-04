@@ -413,7 +413,12 @@ class DenseNet2D(nn.Module):
         # else:
 
         elPred = torch.cat(
-            [pred_c_seg[:, 0, :], elOut[:, 2:5], pred_c_seg[:, 1, :], elOut[:, 7:10]],
+            [
+                pred_c_seg[:, 0, :],
+                elOut[:, 2:5].cpu(),
+                pred_c_seg[:, 1, :],
+                elOut[:, 7:10].cpu(),
+            ],
             dim=1,
         )  # Bx5
         # print(elPred)
@@ -483,7 +488,7 @@ def get_allLoss(
         l_seg2pt_iri, pred_c_seg_iri = get_seg2ptLoss(
             iriMap, elNorm[:, 0, :2], temperature=4
         )
-        temp = torch.stack([loc_onlyMask, loc_onlyMask], dim=1)
+        temp = torch.stack([loc_onlyMask, loc_onlyMask], dim=1).cpu()
         l_seg2pt_iri = torch.sum(l_seg2pt_iri * temp) / torch.sum(
             temp.to(torch.float32)
         )

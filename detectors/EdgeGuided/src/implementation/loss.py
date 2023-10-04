@@ -25,7 +25,7 @@ def get_seg2ptLoss(op, gtPts, temperature=1):
     # center
     # op: BXHXW - single channel corresponding to pupil or iris predictions
     B, H, W = op.shape
-    wtMap = F.softmax(op.view(B, -1) * temperature, dim=1)  # [B, HXW]
+    wtMap = F.softmax(op.view(B, -1) * temperature, dim=1).cpu()  # [B, HXW]
 
     # t = wtMap.view(B, H, W)
     # for i in range(H):
@@ -51,7 +51,7 @@ def get_seg2ptLoss(op, gtPts, temperature=1):
     if len(predPts.shape) == 1:
         predPts = predPts[None]
 
-    loss = F.l1_loss(predPts, gtPts, reduction="none")
+    loss = F.l1_loss(predPts, gtPts.cpu(), reduction="none").cpu()
     return loss, predPts
 
 
@@ -115,7 +115,7 @@ def GDiceLoss(ip, target, norm=F.softmax):
 
     assert ip.shape == target.shape
     ip = norm(ip, dim=1)  # Softmax or Sigmoid over channels
-    ip = torch.flatten(ip, start_dim=2, end_dim=-1)
+    ip = torch.flatten(ip, start_dim=2, end_dim=-1).cpu()
     target = torch.flatten(target, start_dim=2, end_dim=-1).cpu().to(dtype=ip.dtype)
     numerator = ip * target
     denominator = ip + target
