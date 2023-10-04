@@ -41,9 +41,16 @@ class _DetectionArguments:
 
 class Detector(AbstractDetector):
     def __init__(self, config: Config = Config()) -> None:
+        if torch.cuda.is_available():
+            print("Using CUDA for detection")
+            self.device = torch.device("cuda")
+        else:
+            print("Using CPU for detection")
+            self.device = torch.device("cpu")
+
         state_dict = torch.load(
             Path(__file__).parent / "implementation/gen_00000016.pt",
-            map_location=torch.device("cpu"),
+            map_location=self.device,
         )
 
         self.bdcn = BDCN()
@@ -59,25 +66,28 @@ class Detector(AbstractDetector):
 
         netDict = torch.load(
             Path(__file__).parent / "implementation/baseline_edge_16.pkl",
-            map_location=torch.device("cpu"),
+            map_location=self.device,
         )
         self.model.load_state_dict(netDict["state_dict"])
 
-        # Ensure to place the networks on the CPU
-        self.device = torch.device("cpu")
+        # Ensure to place the networks on the suitable device
         self.model = self.model.to(device=self.device)
         self.bdcn = self.bdcn.to(device=self.device)
 
+        # Strange, but well ...
+        self.args = _DetectionArguments()
+        self.args.prec = self.device
+
     def detect(self, frame: np.ndarray) -> Ellipse:
         frame_scaled_shifted, scale_shift = preprocess_frame(frame, (240, 320), True)
-        input_tensor = frame_scaled_shifted.unsqueeze(0)
+        input_tensor = frame_scaled_shifted.to(self.device).unsqueeze(0)
 
         # Run the prediction network
         edge_map, seg_map, pupil_ellipse, iris_ellipse = evaluate_ellseg_on_image(
             input_tensor,
             self.model,
             self.bdcn,
-            args=_DetectionArguments(),
+            args=self.args,
             device=self.device,
         )
         edge_map *= 255
@@ -92,7 +102,7 @@ class Detector(AbstractDetector):
             y=pupil_ellipse[1],
             major=pupil_ellipse[2],
             minor=pupil_ellipse[3],
-            rotation=pupil_ellipse[4] + math.pi
+            rotation=pupil_ellipse[4] + math.pi,
         )
 
     @classmethod

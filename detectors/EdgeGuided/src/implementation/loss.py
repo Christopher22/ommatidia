@@ -50,7 +50,7 @@ def get_seg2ptLoss(op, gtPts, temperature=1):
     # The code does not run - avoid any missmatch
     if len(predPts.shape) == 1:
         predPts = predPts[None]
-        
+
     loss = F.l1_loss(predPts, gtPts, reduction="none")
     return loss, predPts
 
@@ -101,7 +101,6 @@ def SurfaceLoss(x, distmap):
 
 
 def GDiceLoss(ip, target, norm=F.softmax):
-
     mxLabel = ip.shape[1]
     allClasses = np.arange(
         mxLabel,
@@ -184,9 +183,7 @@ def get_seg2elLoss(opSeg, opEl, loc_seg_ok):
     B, H, W = opSeg.shape
     opSeg = opSeg.to(torch.float32)
 
-    mesh = (
-        create_meshgrid(H, W, normalized_coordinates=True).squeeze().cpu()
-    )  # 1xHxWx2
+    mesh = create_meshgrid(H, W, normalized_coordinates=True).squeeze().cpu()  # 1xHxWx2
     mesh.requires_grad = False
 
     for i in range(0, B):
@@ -218,9 +215,7 @@ def get_selfConsistency(opSeg, opEl, loc_seg_ok):
 
     opSeg = F.log_softmax(opSeg, dim=1)
     B, _, H, W = opSeg.shape
-    mesh = (
-        create_meshgrid(H, W, normalized_coordinates=True).squeeze().cpu()
-    )  # 1xHxWx2
+    mesh = create_meshgrid(H, W, normalized_coordinates=True).squeeze().cpu()  # 1xHxWx2
     mesh.requires_grad = False
 
     irisEl = opEl[:, :5]
@@ -322,7 +317,6 @@ class WeightedHausdorffDistance(nn.Module):
         terms_1 = []
         terms_2 = []
         for b in range(batch_size):
-
             # One by one
             prob_map_b = prob_map[b, :, :]
             gt_b = gt[b, :].unsqueeze(0)  # Ensure point is [1, 2]

@@ -1,4 +1,4 @@
-FROM ommatidia-py3.6.12-cv3.4-np1.19.2:0.1 AS python_environment
+FROM ommatidia-py3.6.12-cv3.4-np1.19.2-cuda:0.1 AS python_environment
 COPY requirements.txt requirements.txt
 RUN $MICROMAMBA_INSTALL requirements.txt $MICROMAMBA_INSTALL_DEFAULT && $MICROMAMBA_CLEAR
 

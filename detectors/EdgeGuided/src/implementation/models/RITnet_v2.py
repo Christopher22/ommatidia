@@ -345,7 +345,6 @@ class DenseNet2D(nn.Module):
         ID,  # A Tensor containing information about the dataset or subset a entry
         alpha,
     ):  # Alpha score for various loss curicullum
-
         assert (
             self.setting["input_concat"] + self.setting["add_edge"] < 2
         ), "edge can use only 1 time!"
