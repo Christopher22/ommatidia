@@ -56,7 +56,7 @@ class ImageDefinitionPython(ImageDefinition):
 
     def __str__(self) -> str:
         if self.version_py is None:
-            return f"ommatidia:{self.image_version}"
+            return f"ommatidia{'-cuda' if self.use_cuda else ''}:{self.image_version}"
         else:
             return f"ommatidia-py{self.version_py}-cv{self.version_opencv}-np{self.version_numpy}{'-cuda' if self.use_cuda else ''}:{self.image_version}"
 
@@ -90,7 +90,7 @@ class ImageDefinitionPython(ImageDefinition):
 
         with file_name.open(mode="r", encoding="utf8") as file:
             regex = re.compile(
-                r"FROM\s+ommatidia(?P<config>-py(?P<py>[0-9\.\*]+)-cv(?P<cv>[0-9\.\*]+)-np(?P<np>[0-9\.\*]+)(?P<cuda>-cuda)?)?:(?P<version>[0-9\.]+)"
+                r"FROM\s+ommatidia(?P<config>-py(?P<py>[0-9\.\*]+)-cv(?P<cv>[0-9\.\*]+)-np(?P<np>[0-9\.\*]+))?(?P<cuda>-cuda)?:(?P<version>[0-9\.]+)"
             )
             image_config = regex.match(file.read())
             if image_config is None:
