@@ -8,10 +8,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive  \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 USER $MAMBA_USER
 
-RUN micromamba install -y -n base -f env.yaml && $MICROMAMBA_CLEAR
-
-SHELL ["micromamba", "run", "-n", "base", "/bin/bash", "-c"]
-RUN python -m pip install --no-cache-dir opencv-python-headless==3.4.2.17
+RUN $MICROMAMBA_INSTALL env.yaml $MICROMAMBA_INSTALL_DEFAULT && $MICROMAMBA_CLEAR
 
 FROM python_environment
 COPY --chown=$MAMBA_USER:$MAMBA_USER src/detector.py ${PUPIL_DETECTOR_DIR}/detector.py
