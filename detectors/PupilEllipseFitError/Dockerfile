@@ -1,4 +1,4 @@
-FROM ommatidia-py3.6.12-cv3.4-np1.19:0.1 AS python_environment
+FROM ommatidia:0.1 AS python_environment
 COPY --chown=$MAMBA_USER:$MAMBA_USER env.yaml env.yaml
 
 # Fix "libgthread-2.0.so.0: cannot open shared object file: No such file or directory"
