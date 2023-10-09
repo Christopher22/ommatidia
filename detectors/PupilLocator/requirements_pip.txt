@@ -1,2 +1,0 @@
-tensorflow==2.5
-tensorflow_hub==0.8.0
