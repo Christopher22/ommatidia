@@ -55,19 +55,28 @@ class ImageDefinitionPython(ImageDefinition):
     use_cuda: bool
 
     def __str__(self) -> str:
-        return f"ommatidia-py{self.version_py}-cv{self.version_opencv}-np{self.version_numpy}{'-cuda' if self.use_cuda else ''}:{self.image_version}"
+        if self.version_py is None:
+            return f"ommatidia:{self.image_version}"
+        else:
+            return f"ommatidia-py{self.version_py}-cv{self.version_opencv}-np{self.version_numpy}{'-cuda' if self.use_cuda else ''}:{self.image_version}"
 
     def _docker_args(self) -> Mapping[str, str]:
         """
         Calculate the build arguments for Docker.
         """
-        args = {
-            "VERSION_PYTHON": self.version_py,
-            "VERSION_OPENCV": self.version_opencv,
-            "VERSION_NUMPY": self.version_numpy,
-        }
-        if self.use_cuda:
-            args["MICROMAMBA_TAG"] = "focal-cuda-11.3.1"
+
+        # Allow usage of default parameters
+        if self.version_py is not None:
+            args = {
+                "VERSION_PYTHON": self.version_py,
+                "VERSION_OPENCV": self.version_opencv,
+                "VERSION_NUMPY": self.version_numpy,
+            }
+            if self.use_cuda:
+                args["MICROMAMBA_TAG"] = "focal-cuda-11.3.1"
+        else:
+            args = {}
+    
         return args
 
     def _template_path(self) -> Path:
@@ -81,7 +90,7 @@ class ImageDefinitionPython(ImageDefinition):
 
         with file_name.open(mode="r", encoding="utf8") as file:
             regex = re.compile(
-                r"FROM\s+ommatidia-py(?P<py>[0-9\.]+)-cv(?P<cv>[0-9\.]+)-np(?P<np>[0-9\.]+)(?P<cuda>-cuda)?:(?P<version>[0-9\.]+)"
+                r"FROM\s+ommatidia(?P<config>-py(?P<py>[0-9\.\*]+)-cv(?P<cv>[0-9\.\*]+)-np(?P<np>[0-9\.\*]+)(?P<cuda>-cuda)?)?:(?P<version>[0-9\.]+)"
             )
             image_config = regex.match(file.read())
             if image_config is None:
