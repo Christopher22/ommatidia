@@ -15,7 +15,8 @@
 	#ifdef __arm__
 	#include <arm_neon.h> 
 	#else
-	#include <x86intrin.h>
+	// #include <x86intrin.h>
+	#include <immintrin.h>
 	#endif
 #endif
 
