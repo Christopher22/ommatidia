@@ -8,7 +8,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive  \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/*
 USER $MAMBA_USER
 
-RUN $MICROMAMBA_INSTALL env.yaml $MICROMAMBA_INSTALL_DEFAULT && $MICROMAMBA_CLEAR
+RUN $MICROMAMBA_INSTALL env.yaml && $MICROMAMBA_CLEAR
 
 FROM python_environment
 COPY --chown=$MAMBA_USER:$MAMBA_USER src/detector.py ${PUPIL_DETECTOR_DIR}/detector.py
