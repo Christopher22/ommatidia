@@ -41,10 +41,11 @@ class Container:
     A container with included pupil detector.
     """
 
-    def __init__(self, name_and_tag: str, show_output: bool = False):
+    def __init__(self, name_and_tag: str, show_output: bool = False, remove_container: bool = True):
         self.name_and_tag = name_and_tag
         self.port = Container._find_free_port()
         self.entry_point = f"http://127.0.0.1:{self.port}"
+        self.remove_container = remove_container
         self._process = None
         self._is_ready = False
         self._output = (
@@ -74,7 +75,7 @@ class Container:
 
         if self._process is not None and self._process.returncode is None:
             # Kill the process
-            Container._kill(self.container_id)
+            Container._kill(self.container_id, remove=self.remove_container)
             self._process.wait(5)
 
     def is_ready(self, wait: int) -> bool:
@@ -108,7 +109,9 @@ class Container:
             ) from error
         except RemoteDisconnected:
             return False
-
+        except ConnectionResetError:
+            return False
+        
     def request(
         self,
         relative_url: str,

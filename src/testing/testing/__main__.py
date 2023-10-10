@@ -109,7 +109,10 @@ class TestDetector(DetectorHandler):
         output = container.output
         if output is not None:
             logging.info(output)
-        logging.info("Some tests failed")
+
+        # Do not remove the container to be able to see logs
+        container.remove_container = False
+        logging.info(f"Some tests failed; you can check the logs with 'docker logs {container.container_id}'")
         return False
 
 
