@@ -1,7 +1,7 @@
-FROM ommatidia-py3.7-cv4.2-np1.21.5:0.1 AS python_environment
+FROM ommatidia:0.1 AS python_environment
 ARG MAMBA_DOCKERFILE_ACTIVATE=1
 COPY env.yaml env.yaml
-RUN $MICROMAMBA_INSTALL env.yaml $MICROMAMBA_INSTALL_DEFAULT && $MICROMAMBA_CLEAR
+RUN $MICROMAMBA_INSTALL env.yaml && $MICROMAMBA_CLEAR
 
 FROM python_environment
 COPY --chown=$MAMBA_USER:$MAMBA_USER src/detector.py ${PUPIL_DETECTOR_DIR}/detector.py
