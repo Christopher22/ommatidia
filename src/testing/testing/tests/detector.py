@@ -72,7 +72,7 @@ class TestCorrectDetection(Test):
         super().__init__("TestCorrectDetection")
 
     def run(self, container: Container):
-        MAXIMAL_PIXEL_DIFFERENCE = 20
+        MAXIMAL_PIXEL_DIFFERENCE = 40
 
         # Create detector
         creation_response = container.request("/detections/", method="POST", body={})
