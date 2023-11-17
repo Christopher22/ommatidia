@@ -1,0 +1,2 @@
+# Akinlar 2022
+This folder contains the pupil detector proposed in [Accurate CNN-based Pupil Segmentation with an Ellipse Fit Error Regularization Term](https://doi.org/10.1016/j.eswa.2021.116004) by C. Akinlar, H.K. Kucukkartal, and C. Topal.

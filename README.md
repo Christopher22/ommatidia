@@ -87,18 +87,19 @@ Please note that while this collection may not be fully exhaustive, it encompass
 | @fuhl2018a           | (\checkmark)    | C++                  | \checkmark                                       |
 | @george2018          |                 |                      |                                                  |
 | @li2018              |                 |                      |                                                  |
-| @martinikorena2018   | \checkmark      | Matlab               | Excluded: MATLAB code                            |
+| @martinikorena2018   | \checkmark      | Matlab               | Excluded: Requires proprietary interpreter       |
 | @santini2018         | (\checkmark)    | C++                  | Excluded: Temporal extension of other algorithm  |
 | @santini2018a        | \checkmark      | C++                  | \checkmark                                       |
 | @vera-olmos2018      | \checkmark      | Python               | Excluded: Unable to specify container            |
 | @fuhl2017            |                 |                      |                                                  |
 | @topal2018           |                 |                      |                                                  |
 | @vera-olmos2017      |                 |                      |                                                  |
-| @fuhl2016            |                 |                      |                                                  |
-| @fuhl2016a           | \checkmark      | C++                  | \checkmark                                       |
+| @fuhl2016a           |                 |                      |                                                  |
+| @fuhl2016b           | \checkmark      | C++                  | \checkmark                                       |
 | @fuhl2015            | \checkmark      | C++                  | \checkmark                                       |
 | @javadi2015          | \checkmark      | .NET                 | Excluded: Not available for Linux                |
 | @swirski2012         | \checkmark      | C++                  | \checkmark                                       |
+| @kassner2014b        | \checkmark      | Python               | \checkmark                                       |
 | @donghengli2005      | \checkmark      | C++                  | \checkmark                                       |
 
 : List of pupil detectors included in our review. {#tbl:pupil_detectors}
