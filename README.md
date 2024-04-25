@@ -25,4 +25,4 @@ Ensure to update tests as appropriate and adhere to the existing coding style.
 ## Citation
 If you use this toolkit for your research, please cite the corresponding paper:
 
-**Gundler et al., Improving eye-tracking data quality: A framework for reproducible evaluation of detection algorithm (2024)**
+**Gundler C, Temmen M, Gulberti A, Pötter-Nerger M, Ückert F. Improving Eye-Tracking Data Quality: A Framework for Reproducible Evaluation of Detection Algorithms. Sensors. 2024; 24(9):2688. https://doi.org/10.3390/s24092688**
